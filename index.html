@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0c2e21">
+  <title>Smart Greenhouse — Virtual Agriculture Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+/* ==========================================================
+   Smart Greenhouse — Virtual Agriculture Simulator
+   Design tokens → base → header → sensors → scene → panels
+   ========================================================== */
+
+:root {
+  /* palette */
+  --canopy: #0c2e21;
+  --canopy-2: #123f2d;
+  --fern: #2c9a5a;
+  --fern-deep: #1f7a45;
+  --lime: #c4ea6b;
+  --dew: #3a98dd;
+  --amber: #e9a71f;
+  --coral: #e2503b;
+
+  --ink: #0f2a1f;
+  --ink-2: #4a6255;
+  --ink-3: #7a8e81;
+  --page: #e8efe1;
+  --card: #fbfdf8;
+  --tint: #f0f6ea;
+  --line: #dce7d5;
+
+  /* level colours (overridden per component) */
+  --lvl: var(--fern);
+  --lvl-bg: #dcf1de;
+  --lvl-ink: #1c7440;
+
+  /* shape + depth */
+  --r-xl: 30px;
+  --r-lg: 24px;
+  --r-md: 18px;
+  --r-sm: 12px;
+  --shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 1px 2px rgba(12, 46, 33, .06), 0 14px 30px -14px rgba(12, 46, 33, .28);
+  --shadow-lift: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 2px 4px rgba(12, 46, 33, .08), 0 18px 34px -14px rgba(12, 46, 33, .34);
+
+  /* type */
+  --font-d: 'Bricolage Grotesque', 'Avenir Next', 'Trebuchet MS', system-ui, sans-serif;
+  --font-b: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* driven by script.js: 1 = full daylight, 0 = night */
+  --day: 1;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font: 400 15px/1.5 var(--font-b);
+  color: var(--ink);
+  background:
+    linear-gradient(rgba(12, 46, 33, .035) 1px, transparent 1px) 0 0 / 100% 96px,
+    linear-gradient(90deg, rgba(12, 46, 33, .035) 1px, transparent 1px) 0 0 / 96px 100%,
+    var(--page);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--dew);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ---------- Header ---------- */
+
+.topbar {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 16px 118px;
+  color: #fff;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, #17573c calc(var(--day) * 100%), #0c2a4d),
+      color-mix(in srgb, #0c2e21 calc(var(--day) * 100%), #071a33));
+  transition: background .6s ease;
+}
+
+/* greenhouse ribs */
+.topbar::before {
+  content: "";
+  position: absolute;
+  right: -40px; bottom: -150px;
+  width: 520px; height: 420px;
+  border-radius: 260px 260px 0 0;
+  border: 2px solid rgba(255, 255, 255, .10);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 64px, rgba(255, 255, 255, .07) 64px 66px);
+  pointer-events: none;
+}
+
+.topbar-inner {
+  position: relative;
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+.logo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px; height: 52px;
+  font-size: 28px;
+  border-radius: 18px 18px 14px 14px;
+  background: linear-gradient(160deg, rgba(196, 234, 107, .34), rgba(255, 255, 255, .08));
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .28), 0 8px 20px -8px rgba(0, 0, 0, .5);
+}
+
+h1 {
+  font: 800 clamp(22px, 4.6vw, 32px)/1.05 var(--font-d);
+  letter-spacing: .02em;
+}
+
+.brand p {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #b7d8c4;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.online {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px 9px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .10);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.online-dot {
+  position: relative;
+  font-size: 12px;
+  line-height: 1;
+}
+.online-dot::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid #4ade80;
+  animation: pulse 2.2s ease-out infinite;
+}
+@keyframes pulse {
+  0%   { transform: scale(.5); opacity: .9; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ---------- Layout ---------- */
+
+.layout {
+  position: relative;
+  max-width: 1240px;
+  margin: -96px auto 0;
+  padding: 0 16px 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.col { display: contents; }
+
+.sensors { order: 0; }
+.scene-card { order: 1; }
+.controls { order: 2; }
+.health { order: 3; }
+.chart-card { order: 4; }
+.system { order: 5; }
+
+@media (min-width: 1040px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 388px;
+    gap: 22px;
+    align-items: start;
+  }
+  .sensors { grid-column: 1 / -1; }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+  }
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--r-lg);
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  font: 700 21px/1.2 var(--font-d);
+  letter-spacing: -.005em;
+}
+
+/* ---------- Sensors: ring gauges ---------- */
+
+.sensors {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+.sensor:nth-of-type(-n + 3) { grid-column: span 2; }
+.sensor:nth-of-type(n + 4)  { grid-column: span 3; }
+
+@media (min-width: 620px) {
+  .sensors { gap: 14px; }
+}
+
+@media (min-width: 760px) {
+  .sensors { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+  .sensor:nth-of-type(n) { grid-column: auto; }
+}
+
+.sensor {
+  --track: #e3ecdc;
+  padding: 14px 8px 12px;
+  text-align: center;
+  background: var(--card);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  transition: box-shadow .3s;
+}
+.sensor[data-level="warn"] { --lvl: var(--amber); --lvl-bg: #fdf0cc; --lvl-ink: #85560a; }
+.sensor[data-level="bad"]  { --lvl: var(--coral); --lvl-bg: #fde1db; --lvl-ink: #a02d1b; }
+
+.gauge {
+  position: relative;
+  width: min(100%, 116px);
+  aspect-ratio: 1;
+  margin: 0 auto 4px;
+}
+.gauge svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+.gauge circle {
+  fill: none;
+  transform: rotate(135deg);
+  transform-origin: 50% 50%;
+}
+.g-track {
+  stroke: var(--track);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 188.5 251.33;
+}
+.g-zone {
+  stroke: var(--fern);
+  stroke-width: 14;
+  stroke-linecap: butt;
+  stroke-dasharray: 0 251.33;
+  opacity: .26;
+}
+.g-val {
+  stroke: var(--lvl);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 0 251.33;
+  transition: stroke-dasharray .7s cubic-bezier(.3, .7, .3, 1), stroke .3s;
+}
+
+.g-read {
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  transform: translateY(-58%);
+  text-align: center;
+  font-family: var(--font-d);
+  line-height: 1;
+  white-space: nowrap;
+}
+.g-read span { font-size: clamp(19px, 5vw, 24px); font-weight: 800; letter-spacing: -.02em; }
+.g-read small { margin-left: 1px; font-size: 11px; font-weight: 600; color: var(--ink-3); }
+
+.g-ico {
+  position: absolute;
+  left: 50%; bottom: -3px;
+  transform: translateX(-50%);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.sensor h3 {
+  margin-top: 6px;
+  font: 700 13.5px/1.2 var(--font-d);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  padding: 3px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  max-width: 100%;
+  text-align: left;
+  color: var(--lvl-ink);
+  background: var(--lvl-bg);
+  border-radius: 99px;
+  transition: background .3s, color .3s;
+}
+.chip::before {
+  content: "";
+  flex: none;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--lvl);
+}
+
+.target {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* ---------- Greenhouse scene ---------- */
+
+.scene-card {
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: var(--canopy);
+  box-shadow: var(--shadow-lift);
+}
+
+.scene-wrap {
+  position: relative;
+  line-height: 0;
+  background: var(--canopy);
+}
+#scene { display: block; width: 100%; height: auto; }
+
+.clock {
+  position: absolute;
+  top: 14px; left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  border-radius: 99px;
+  background: rgba(8, 30, 21, .55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.scene-tip {
+  position: absolute;
+  right: 14px; bottom: 12px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #dff2e5;
+  border-radius: 99px;
+  background: rgba(8, 30, 21, .55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+@media (max-width: 560px) { .scene-tip { display: none; } }
+
+.hot { cursor: pointer; outline: none; }
+.hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 6;
+  transition: stroke .2s, fill .2s;
+}
+.hot:hover .hit,
+.hot:focus-visible .hit {
+  stroke: #c4ea6b;
+  fill: rgba(196, 234, 107, .14);
+}
+.hot:active .hit { fill: rgba(196, 234, 107, .3); }
+
+.led { fill: #7c9a88; transition: fill .3s; animation: blink 2.6s ease-in-out infinite; }
+.led[data-level="ok"]   { fill: #4ade80; }
+.led[data-level="warn"] { fill: #f5b83a; }
+.led[data-level="bad"]  { fill: #f0533f; }
+@keyframes blink { 50% { opacity: .45; } }
+
+.cloud { animation: drift 120s linear infinite; }
+.cloud.c2 { animation-duration: 170s; animation-delay: -60s; }
+.cloud.c3 { animation-duration: 210s; animation-delay: -130s; }
+@keyframes drift {
+  from { transform: translateX(-260px); }
+  to   { transform: translateX(900px); }
+}
+.star { animation: twinkle 3.2s ease-in-out infinite; }
+@keyframes twinkle { 50% { opacity: .35; } }
+
+.plant-sway { animation: sway 6s ease-in-out infinite alternate; }
+@keyframes sway {
+  from { transform: rotate(-1deg); }
+  to   { transform: rotate(1.2deg); }
+}
+
+#plantHealth { transition: transform 1.6s ease, filter 1.6s ease; }
+#plantHealth[data-health="warning"]  { filter: saturate(.88) sepia(.12); }
+#plantHealth[data-health="critical"] { filter: saturate(.55) sepia(.4) brightness(.9); transform: rotate(2.5deg) scaleY(.94); }
+
+#plantScale { transition: transform 1.4s ease; }
+
+.pop { animation: pop .9s ease-out; }
+@keyframes pop {
+  0%   { transform: scale(.9); }
+  40%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+#tankWater {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: transform .5s linear;
+}
+
+.beam, .halo { opacity: 0; transition: opacity .7s ease; }
+.lamp-on .beam, .lamp-on .halo { opacity: 1; }
+.bulb { fill: #c2cec5; transition: fill .5s; }
+.lamp-on .bulb { fill: #fff6c4; }
+
+.fan-on .blades { animation: spin .5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.airflow path {
+  stroke: #3fa9bd;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 16 14;
+  opacity: 0;
+  transition: opacity .4s;
+}
+.fan-on .airflow path { opacity: .85; animation: flow-air .9s linear infinite; }
+.fan-on .airflow path:nth-child(2) { animation-delay: -.25s; }
+.fan-on .airflow path:nth-child(3) { animation-delay: -.5s; }
+.fan-on .airflow path:nth-child(4) { animation-delay: -.7s; }
+@keyframes flow-air { to { stroke-dashoffset: -30; } }
+
+.pipe-water { stroke-dasharray: 9 13; opacity: 0; transition: opacity .3s; }
+.pump-on .pipe-water { opacity: 1; animation: flow-water .6s linear infinite; }
+@keyframes flow-water { to { stroke-dashoffset: -22; } }
+
+.drop { opacity: 0; }
+.pump-on .drop { animation: drop 1.1s cubic-bezier(.4, 0, 1, 1) infinite; }
+@keyframes drop {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translate(var(--dx), 286px); opacity: 0; }
+}
+
+.ripple { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.pump-on .ripple { animation: ripple 1.1s ease-out infinite; }
+@keyframes ripple {
+  0%   { transform: scale(.25); opacity: .9; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* ---------- Growth console ---------- */
+
+.growth {
+  padding: 20px 24px 26px;
+  color: #eaf6ee;
+  background: linear-gradient(180deg, var(--canopy) 0%, var(--canopy-2) 100%);
+}
+
+.growth-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.growth-pct { font: 700 clamp(22px, 5vw, 28px)/1.1 var(--font-d); }
+.growth-pct b { font-weight: 800; color: var(--lime); }
+
+.stage-tag {
+  padding: 6px 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--canopy);
+  background: var(--lime);
+  border-radius: 99px;
+}
+
+.track {
+  position: relative;
+  height: 14px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .12);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .3);
+}
+.track > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  min-width: 14px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #2c9a5a, #8fd35c 70%, #c4ea6b);
+  box-shadow: 0 0 16px rgba(196, 234, 107, .55);
+  transition: width .8s ease;
+}
+.track .node {
+  position: absolute;
+  top: 50%;
+  width: 22px; height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: var(--canopy-2);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .28);
+  transition: background .4s, box-shadow .4s;
+}
+.track .node.done { background: var(--lime); box-shadow: inset 0 0 0 3px #7fc24a; }
+.track .node.now  { background: #fff; box-shadow: 0 0 0 5px rgba(196, 234, 107, .45), inset 0 0 0 5px var(--lime); }
+.track .node:first-of-type { left: 0; margin-left: 0; }
+
+.stage-labels {
+  position: relative;
+  height: 20px;
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #93b8a2;
+}
+.stage-labels span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  transition: color .3s;
+}
+.stage-labels span:first-child { transform: none; }
+.stage-labels span.done { color: #cfe8d7; }
+.stage-labels span.now  { color: var(--lime); font-weight: 700; }
+
+@media (max-width: 520px) {
+  .stage-labels { font-size: 11px; }
+  .stage-labels span:not(.now) { opacity: 0; }
+}
+
+/* ---------- Segmented controls ---------- */
+
+.seg {
+  position: relative;
+  display: flex;
+  padding: 4px;
+  border-radius: 16px;
+  background: #e5eddf;
+  box-shadow: inset 0 1px 3px rgba(12, 46, 33, .12);
+}
+.seg button {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: 11px 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  border-radius: 12px;
+  transition: color .25s;
+}
+.seg button[aria-pressed="true"] { color: #fff; }
+
+.mode-seg::before {
+  content: "";
+  position: absolute;
+  top: 4px; bottom: 4px; left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 12px;
+  background: linear-gradient(160deg, #2c9a5a, #1b6f41);
+  box-shadow: 0 6px 14px -6px rgba(31, 122, 69, .8);
+  transition: transform .3s cubic-bezier(.3, .8, .3, 1), background .3s;
+}
+.mode-seg[data-value="manual"]::before {
+  transform: translateX(100%);
+  background: linear-gradient(160deg, #e9a71f, #c7810b);
+  box-shadow: 0 6px 14px -6px rgba(199, 129, 11, .8);
+}
+
+.seg.small { padding: 3px; border-radius: 13px; }
+.seg.small button { padding: 7px 14px; font-size: 13px; }
+.seg.small button[aria-pressed="true"] {
+  color: #fff;
+  background: var(--canopy);
+  box-shadow: 0 4px 10px -4px rgba(12, 46, 33, .6);
+}
+
+/* Language selector styles */
+.lang-seg button { padding: 6px 10px; font-size: 12px; }
+
+/* ---------- Control panel ---------- */
+
+.controls { display: flex; flex-direction: column; gap: 16px; }
+.controls h2 { margin-bottom: -2px; }
+
+.hint {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  min-height: 3em;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.act {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 118px;
+  padding: 14px 14px 12px;
+  text-align: left;
+  background: var(--tint);
+  border: 0;
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1.5px var(--line), 0 1px 0 #fff;
+  transition: transform .15s ease, box-shadow .25s, background .25s;
+  -webkit-tap-highlight-color: transparent;
+}
+.act:hover { box-shadow: inset 0 0 0 1.5px #b9d3b0, 0 10px 20px -12px rgba(12, 46, 33, .4); transform: translateY(-1px); }
+.act:active { transform: scale(.96); }
+
+.act .ic {
+  display: grid;
+  place-items: center;
+  width: 40px; height: 40px;
+  margin-bottom: 4px;
+  font-size: 21px;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 2px 6px -2px rgba(12, 46, 33, .25);
+  transition: background .25s, box-shadow .25s;
+}
+.act .lb { font: 700 14.5px/1.2 var(--font-d); }
+
+.act .st {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+.act .st em { font-style: normal; }
+
+.sw {
+  position: relative;
+  flex: none;
+  width: 32px; height: 19px;
+  border-radius: 99px;
+  background: #cbd9c3;
+  transition: background .25s;
+}
+.sw::after {
+  content: "";
+  position: absolute;
+  top: 2.5px; left: 2.5px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+  transition: transform .25s cubic-bezier(.3, .8, .3, 1);
+}
+
+.act[aria-pressed="true"] {
+  background: linear-gradient(160deg, #f4fbe4, #e2f4c2);
+  box-shadow: inset 0 0 0 2px var(--fern), 0 12px 24px -14px rgba(44, 154, 90, .8);
+}
+.act[aria-pressed="true"] .ic { background: var(--lime); box-shadow: 0 0 0 5px rgba(196, 234, 107, .35); }
+.act[aria-pressed="true"] .sw { background: var(--fern); }
+.act[aria-pressed="true"] .sw::after { transform: translateX(13px); }
+.act[aria-pressed="true"] .st { color: var(--fern-deep); }
+
+.mini {
+  position: relative;
+  flex: none;
+  width: 32px; height: 19px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #d7e6f3;
+  box-shadow: inset 0 0 0 1.5px #a8c8e4;
+}
+.mini b {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 80%;
+  background: linear-gradient(180deg, #63bdf3, #2a78c0);
+  transition: height .4s ease;
+}
+.act-refill[data-level="warn"] .mini b,
+.act-refill[data-level="bad"] .mini b { background: linear-gradient(180deg, #f5b83a, #e2503b); }
+
+.speed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.reset {
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 15px;
+  box-shadow: inset 0 0 0 1.5px #c3d5ba;
+  transition: background .2s, box-shadow .2s, transform .15s;
+}
+.reset:hover { background: var(--tint); box-shadow: inset 0 0 0 1.5px var(--fern); }
+.reset:active { transform: scale(.98); }
+
+/* ---------- Plant health ---------- */
+
+.health { --lvl: var(--fern); --lvl-bg: #dcf1de; --lvl-ink: #1c7440; }
+.health[data-level="warning"]  { --lvl: var(--amber); --lvl-bg: #fdf0cc; --lvl-ink: #85560a; }
+.health[data-level="critical"] { --lvl: var(--coral); --lvl-bg: #fde1db; --lvl-ink: #a02d1b; }
+
+.health-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0 14px;
+  padding: 16px 18px;
+  border-radius: var(--r-md);
+  background: var(--lvl-bg);
+  transition: background .4s;
+}
+
+.orb {
+  position: relative;
+  flex: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--lvl);
+  box-shadow: inset 0 -3px 5px rgba(0, 0, 0, .18), inset 0 3px 4px rgba(255, 255, 255, .45);
+  transition: background .4s;
+}
+.orb::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--lvl);
+  animation: pulse 2.6s ease-out infinite;
+}
+
+.health-label { font: 800 22px/1.15 var(--font-d); color: var(--lvl-ink); }
+.health-note { margin-top: 2px; font-size: 13.5px; color: var(--ink-2); }
+
+.health-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.health-grid li {
+  --lvl: var(--fern);
+  --lvl-ink: #1c7440;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--tint);
+  box-shadow: inset 3px 0 0 var(--lvl);
+  transition: box-shadow .3s;
+}
+.health-grid li[data-level="warn"] { --lvl: var(--amber); --lvl-ink: #85560a; }
+.health-grid li[data-level="bad"]  { --lvl: var(--coral); --lvl-ink: #a02d1b; }
+.health-grid .k { font-size: 12.5px; color: var(--ink-2); }
+.health-grid .v { font: 700 15px/1.2 var(--font-d); color: var(--lvl-ink); }
+
+/* ---------- Chart ---------- */
+
+.chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+.sub { margin-top: 4px; max-width: 46ch; font-size: 13.5px; color: var(--ink-2); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+  background: var(--tint);
+  border-radius: 99px;
+}
+.legend b { color: var(--ink); font-weight: 700; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.heat { background: var(--coral); }
+.dot.water { background: var(--dew); }
+
+.chart-box { position: relative; height: 260px; }
+.chart-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+@media (max-width: 560px) { .chart-box { height: 220px; } }
+
+/* ---------- Smart System ---------- */
+
+.live { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.live li {
+  --lvl: var(--fern);
+  --lvl-bg: #e3f3df;
+  --lvl-ink: #17603a;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--lvl-ink);
+  background: var(--lvl-bg);
+  border-radius: var(--r-sm);
+  animation: msg-in .35s ease-out;
+}
+.live li.info { --lvl-bg: #dcecf9; --lvl-ink: #1b5a8c; }
+.live li.warn { --lvl-bg: #fdf0cc; --lvl-ink: #7a4e07; }
+.live li.bad  { --lvl-bg: #fde1db; --lvl-ink: #9a2917; }
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.events-title {
+  margin: 20px 0 10px;
+  font: 700 15px/1.2 var(--font-d);
+  color: var(--ink-2);
+}
+
+.events {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 300px;
+  overflow: auto;
+  padding-left: 4px;
+}
+.events li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  padding: 7px 0 7px 18px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  border-left: 2px solid var(--line);
+  margin-left: 4px;
+}
+.events li::before {
+  content: "";
+  position: absolute;
+  left: -6px; top: 13px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--fern);
+  box-shadow: 0 0 0 3px var(--card);
+}
+.events li.warn::before { background: var(--amber); }
+.events li.bad::before  { background: var(--coral); }
+.events li.info::before { background: var(--dew); }
+.events time { font-size: 12.5px; font-weight: 700; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ---------- Footer + toast ---------- */
+
+.foot {
+  padding: 8px 16px 40px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  width: max-content;
+  max-width: min(92vw, 440px);
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  color: #fff;
+  background: rgba(12, 46, 33, .94);
+  border-radius: 16px;
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .14);
+  opacity: 0;
+  transform: translate(-50%, 16px);
+  pointer-events: none;
+  transition: opacity .25s ease, transform .3s cubic-bezier(.3, .8, .3, 1);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 560px) {
+  .topbar-inner { flex-wrap: wrap; row-gap: 12px; }
+  .logo { width: 46px; height: 46px; font-size: 24px; border-radius: 16px 16px 12px 12px; }
+  .brand { gap: 12px; }
+  .online { padding: 7px 13px 7px 10px; font-size: 12px; }
+  .seg button { padding: 11px 4px; font-size: 12.5px; letter-spacing: 0; }
+  .act { min-height: 112px; }
+}
+
+@media (min-width: 720px) {
+  .topbar { padding: 28px 28px 126px; }
+  .layout { padding: 0 28px 44px; }
+  .card { padding: 26px; }
+  .growth { padding: 22px 30px 28px; }
+  .sensor { padding: 18px 10px 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plant-sway, .led, .cloud, .star, .online-dot::after, .orb::after { animation: none; }
+  .fan-on .blades { animation-duration: 2.4s; }
+  .pop, .live li { animation: none; }
+  #plantScale, #plantHealth, .track > i, .g-val, #tankWater, .mode-seg::before, .sw::after, .toast { transition: none; }
+}
+
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">🌱</span>
+        <div>
+          <h1 id="t-brand-title">SMART GREENHOUSE</h1>
+          <p id="t-brand-sub">Virtual Agriculture Simulator</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="seg small lang-seg" id="langSeg" role="group" aria-label="Language selection">
+          <button type="button" data-lang="en">EN</button>
+          <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+          <button type="button" data-lang="kz">KZ</button>
+        </div>
+        <div class="online" role="status"><span class="online-dot" aria-hidden="true">🟢</span> <span id="t-sys-online">SYSTEM ONLINE</span></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- ============ SENSORS ============ -->
+    <section class="sensors" aria-labelledby="h-sensors">
+      <h2 id="h-sensors" class="sr-only">Sensors</h2>
+
+      <article class="sensor" id="s-temp" data-key="temp" data-level="ok">
+        <div class="gauge">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="g-track" cx="50" cy="50" r="40"/>
+            <circle class="g-zone" id="z-temp" cx="50" cy="50" r="40"/>
+            <circle class="g-val" id="m-temp" cx="50" cy="50" r="40"/>
+          </svg>
+          <p class="g-read"><span id="v-temp">24.5</span><small>°C</small></p>
+          <span class="g-ico" aria-hidden="true">🌡</span>
+        </div>
+        <h3 id="t-s-temp">Temperature</h3>
+        <p class="chip" id="c-temp">Optimal</p>
+        <p class="target" id="t-target-temp">Ideal 19–29 °C</p>
+      </article>
+
+      <article class="sensor" id="s-hum" data-key="hum" data-level="ok">
+        <div class="gauge">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="g-track" cx="50" cy="50" r="40"/>
+            <circle class="g-zone" id="z-hum" cx="50" cy="50" r="40"/>
+            <circle class="g-val" id="m-hum" cx="50" cy="50" r="40"/>
+          </svg>
+          <p class="g-read"><span id="v-hum">58</span><small>%</small></p>
+          <span class="g-ico" aria-hidden="true">💧</span>
+        </div>
+        <h3 id="t-s-hum">Air Humidity</h3>
+        <p class="chip" id="c-hum">Optimal</p>
+        <p class="target" id="t-target-hum">Ideal 40–75 %</p>
+      </article>
+
+      <article class="sensor" id="s-soil" data-key="soil" data-level="ok">
+        <div class="gauge">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="g-track" cx="50" cy="50" r="40"/>
+            <circle class="g-zone" id="z-soil" cx="50" cy="50" r="40"/>
+            <circle class="g-val" id="m-soil" cx="50" cy="50" r="40"/>
+          </svg>
+          <p class="g-read"><span id="v-soil">52</span><small>%</small></p>
+          <span class="g-ico" aria-hidden="true">🌱</span>
+        </div>
+        <h3 id="t-s-soil">Soil Moisture</h3>
+        <p class="chip" id="c-soil">Optimal</p>
+        <p class="target" id="t-target-soil">Ideal 35–75 %</p>
+      </article>
+
+      <article class="sensor" id="s-light" data-key="light" data-level="ok">
+        <div class="gauge">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="g-track" cx="50" cy="50" r="40"/>
+            <circle class="g-zone" id="z-light" cx="50" cy="50" r="40"/>
+            <circle class="g-val" id="m-light" cx="50" cy="50" r="40"/>
+          </svg>
+          <p class="g-read"><span id="v-light">82</span><small>%</small></p>
+          <span class="g-ico" aria-hidden="true">☀️</span>
+        </div>
+        <h3 id="t-s-light">Light</h3>
+        <p class="chip" id="c-light">Optimal</p>
+        <p class="target" id="t-target-light">Ideal 40–90 %</p>
+      </article>
+
+      <article class="sensor" id="s-water" data-key="water" data-level="ok">
+        <div class="gauge">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="g-track" cx="50" cy="50" r="40"/>
+            <circle class="g-zone" id="z-water" cx="50" cy="50" r="40"/>
+            <circle class="g-val" id="m-water" cx="50" cy="50" r="40"/>
+          </svg>
+          <p class="g-read"><span id="v-water">80</span><small>%</small></p>
+          <span class="g-ico" aria-hidden="true">🚰</span>
+        </div>
+        <h3 id="t-s-water">Water Tank</h3>
+        <p class="chip" id="c-water">OK</p>
+        <p class="target" id="t-target-water">Alert below 15 %</p>
+      </article>
+    </section>
+
+    <div class="col col-main">
+
+      <!-- ============ GREENHOUSE SCENE ============ -->
+      <section class="scene-card" aria-labelledby="h-scene">
+        <h2 id="h-scene" class="sr-only">Greenhouse</h2>
+
+        <div class="scene-wrap">
+          <svg id="scene" viewBox="0 0 800 560" role="group"
+               aria-label="Virtual greenhouse with a growing plant in a pot, irrigation pipe, water tank, fan, grow lamps and sensors.">
+            <defs>
+              <clipPath id="archClip"><path d="M20 560V200Q20 30 400 30Q780 30 780 200V560Z"/></clipPath>
+              <clipPath id="tankClip"><rect x="76" y="358" width="84" height="141" rx="9"/></clipPath>
+
+              <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#a9dcef"/>
+                <stop offset=".5" stop-color="#d9f0ea"/>
+                <stop offset="1" stop-color="#e8f4d8"/>
+              </linearGradient>
+              <linearGradient id="gNight" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#071a33"/>
+                <stop offset=".6" stop-color="#0d3448"/>
+                <stop offset="1" stop-color="#0c3a3a"/>
+              </linearGradient>
+              <linearGradient id="gDusk" gradientUnits="userSpaceOnUse" x1="0" y1="30" x2="0" y2="520">
+                <stop offset="0" stop-color="#7a5fd0" stop-opacity=".35"/>
+                <stop offset=".62" stop-color="#ff9a5c" stop-opacity=".62"/>
+                <stop offset="1" stop-color="#ff9a5c" stop-opacity="0"/>
+              </linearGradient>
+              <radialGradient id="gSun">
+                <stop offset="0" stop-color="#fffbe0"/>
+                <stop offset=".35" stop-color="#ffe680" stop-opacity=".95"/>
+                <stop offset="1" stop-color="#ffd24d" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="gMoonGlow">
+                <stop offset="0" stop-color="#eaf3ff" stop-opacity=".5"/>
+                <stop offset="1" stop-color="#eaf3ff" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="gFog" cx=".5" cy=".5" r=".75">
+                <stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+                <stop offset="1" stop-color="#fff" stop-opacity=".7"/>
+              </radialGradient>
+              <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#fff" stop-opacity=".28"/>
+                <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="gBeam" gradientUnits="userSpaceOnUse" x1="0" y1="112" x2="0" y2="505">
+                <stop offset="0" stop-color="#fff2b0" stop-opacity=".62"/>
+                <stop offset="1" stop-color="#fff2b0" stop-opacity="0"/>
+              </linearGradient>
+              <radialGradient id="gHalo">
+                <stop offset="0" stop-color="#fff0a8" stop-opacity=".95"/>
+                <stop offset="1" stop-color="#fff0a8" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="gWater" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#63bdf3"/>
+                <stop offset="1" stop-color="#2a78c0"/>
+              </linearGradient>
+              <linearGradient id="gPot" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#d9cdb5"/>
+                <stop offset=".45" stop-color="#f1e8d6"/>
+                <stop offset="1" stop-color="#c7b99d"/>
+              </linearGradient>
+              <linearGradient id="gFloor" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#2a6a4d"/>
+                <stop offset=".12" stop-color="#1d4a36"/>
+                <stop offset="1" stop-color="#153a2a"/>
+              </linearGradient>
+              <linearGradient id="leafA" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#2c8a48"/>
+                <stop offset="1" stop-color="#7ccb58"/>
+              </linearGradient>
+              <linearGradient id="leafB" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#37a058"/>
+                <stop offset="1" stop-color="#a0dc6a"/>
+              </linearGradient>
+            </defs>
+
+            <rect width="800" height="560" fill="#0c2e21"/>
+
+            <g clip-path="url(#archClip)">
+              <rect width="800" height="560" fill="url(#gSky)"/>
+
+              <g id="sunG" opacity="0">
+                <circle r="78" fill="url(#gSun)" opacity=".7"/>
+                <circle r="30" fill="#fff4b8"/>
+              </g>
+
+              <g class="clouds" fill="#fff">
+                <g class="cloud c1" opacity=".85"><ellipse cx="150" cy="120" rx="46" ry="15"/><ellipse cx="180" cy="108" rx="30" ry="15"/><ellipse cx="125" cy="110" rx="24" ry="12"/></g>
+                <g class="cloud c2" opacity=".7"><ellipse cx="520" cy="190" rx="58" ry="17"/><ellipse cx="552" cy="177" rx="34" ry="16"/><ellipse cx="490" cy="180" rx="28" ry="13"/></g>
+                <g class="cloud c3" opacity=".6"><ellipse cx="330" cy="82" rx="40" ry="12"/><ellipse cx="356" cy="72" rx="24" ry="12"/></g>
+              </g>
+
+              <path d="M0 400Q120 340 260 392T520 380T800 372V560H0Z" fill="#8fc79c" opacity=".55"/>
+              <path d="M0 440Q160 400 330 436T620 420T800 430V560H0Z" fill="#6fb283" opacity=".6"/>
+
+              <rect id="dusk" width="800" height="560" fill="url(#gDusk)" opacity="0"/>
+              <rect id="night" width="800" height="560" fill="url(#gNight)" opacity="0"/>
+
+              <g id="stars" opacity="0" fill="#fff">
+                <circle class="star" cx="96" cy="150" r="1.6"/>
+                <circle class="star" cx="176" cy="92" r="1.2" style="animation-delay:-1s"/>
+                <circle class="star" cx="238" cy="196" r="1.8" style="animation-delay:-2s"/>
+                <circle class="star" cx="304" cy="118" r="1.3" style="animation-delay:-.5s"/>
+                <circle class="star" cx="368" cy="204" r="1.5" style="animation-delay:-1.5s"/>
+                <circle class="star" cx="452" cy="96" r="1.6" style="animation-delay:-2.4s"/>
+                <circle class="star" cx="514" cy="214" r="1.2" style="animation-delay:-.2s"/>
+                <circle class="star" cx="584" cy="126" r="1.8" style="animation-delay:-1.2s"/>
+                <circle class="star" cx="640" cy="200" r="1.4" style="animation-delay:-2.1s"/>
+                <circle class="star" cx="700" cy="150" r="1.6" style="animation-delay:-.8s"/>
+                <circle class="star" cx="132" cy="250" r="1.2" style="animation-delay:-1.8s"/>
+                <circle class="star" cx="286" cy="262" r="1.4" style="animation-delay:-.4s"/>
+                <circle class="star" cx="480" cy="270" r="1.3" style="animation-delay:-2.6s"/>
+                <circle class="star" cx="668" cy="268" r="1.5" style="animation-delay:-1.4s"/>
+              </g>
+
+              <g id="moonG" opacity="0">
+                <circle r="64" fill="url(#gMoonGlow)"/>
+                <circle r="24" fill="#f2f0dc"/>
+                <circle cx="-7" cy="-5" r="5" fill="#d9d5bd" opacity=".7"/>
+                <circle cx="8" cy="7" r="4" fill="#d9d5bd" opacity=".7"/>
+                <circle cx="5" cy="-11" r="2.6" fill="#d9d5bd" opacity=".6"/>
+              </g>
+
+              <g stroke="#ffffff" stroke-opacity=".5" stroke-width="3" fill="none">
+                <path d="M146.7 0V560M273.3 0V560M400 0V560M526.7 0V560M653.3 0V560"/>
+                <path d="M0 140H800M0 290H800"/>
+              </g>
+
+              <rect y="505" width="800" height="60" fill="url(#gFloor)"/>
+              <rect y="505" width="800" height="4" fill="#3b8760"/>
+              <g stroke="#0f2f21" stroke-opacity=".35" stroke-width="2">
+                <path d="M0 532H800M0 556H800"/>
+                <path d="M120 509L96 560M280 509L268 560M440 509V560M600 509L612 560M760 509L784 560"/>
+              </g>
+              <g fill="#2f8f5a" opacity=".3">
+                <ellipse cx="200" cy="474" rx="62" ry="38"/>
+                <ellipse cx="252" cy="486" rx="44" ry="26"/>
+                <ellipse cx="620" cy="474" rx="70" ry="40"/>
+                <ellipse cx="566" cy="490" rx="40" ry="22"/>
+              </g>
+
+              <g transform="translate(236 505)">
+                <path d="M-17 -24L-12 0H12L17 -24Z" fill="#cbbf9f"/>
+                <ellipse cx="0" cy="-24" rx="17" ry="4" fill="#b9ac8a"/>
+                <g fill="#48a868">
+                  <ellipse cx="0" cy="-42" rx="5" ry="15" transform="rotate(-62 0 -24)"/>
+                  <ellipse cx="0" cy="-42" rx="5" ry="15" transform="rotate(-30 0 -24)"/>
+                  <ellipse cx="0" cy="-42" rx="5" ry="15"/>
+                  <ellipse cx="0" cy="-42" rx="5" ry="15" transform="rotate(30 0 -24)"/>
+                  <ellipse cx="0" cy="-42" rx="5" ry="15" transform="rotate(62 0 -24)"/>
+                </g>
+              </g>
+              <g transform="translate(574 505)">
+                <path d="M-15 -20L-11 0H11L15 -20Z" fill="#d8c5b0"/>
+                <ellipse cx="0" cy="-20" rx="15" ry="3.6" fill="#c3ae97"/>
+                <g fill="#6cbc72">
+                  <ellipse cx="0" cy="-36" rx="4.5" ry="13" transform="rotate(-50 0 -20)"/>
+                  <ellipse cx="0" cy="-36" rx="4.5" ry="13" transform="rotate(-18 0 -20)"/>
+                  <ellipse cx="0" cy="-36" rx="4.5" ry="13" transform="rotate(18 0 -20)"/>
+                  <ellipse cx="0" cy="-36" rx="4.5" ry="13" transform="rotate(50 0 -20)"/>
+                </g>
+              </g>
+
+              <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M117 344V118H400V128" stroke="#4f8a6f" stroke-width="10"/>
+                <path d="M117 344V118H400V128" stroke="#a6d1bb" stroke-width="3" opacity=".55"/>
+                <path class="pipe-water" d="M117 344V118H400V128" stroke="#5db8f2" stroke-width="4"/>
+              </g>
+              <rect x="392" y="118" width="16" height="9" rx="3" fill="#2a5a43"/>
+              <path d="M386 127H414L406 137H394Z" fill="#1b4a35"/>
+
+              <rect x="99" y="280" width="36" height="34" rx="8" fill="#1b4a35" stroke="#0f2f21" stroke-width="2"/>
+              <circle id="ledPump" class="led" cx="117" cy="297" r="4.5"/>
+
+              <rect x="70" y="352" width="96" height="153" rx="14" fill="#ffffff" fill-opacity=".35"/>
+              <g clip-path="url(#tankClip)">
+                <rect id="tankWater" x="76" y="358" width="84" height="141" fill="url(#gWater)"/>
+                <rect x="76" y="358" width="14" height="141" fill="#fff" opacity=".18"/>
+              </g>
+              <rect x="70" y="352" width="96" height="153" rx="14" fill="none" stroke="#e9f4f0" stroke-width="4"/>
+              <g stroke="#ffffff" stroke-opacity=".85" stroke-width="2">
+                <path d="M148 393H160M148 428H160M148 464H160"/>
+              </g>
+              <rect x="92" y="344" width="52" height="12" rx="5" fill="#1b4a35"/>
+
+              <rect x="632" y="150" width="96" height="96" rx="18" fill="#1b4a35" stroke="#0f2f21" stroke-width="3"/>
+              <circle cx="680" cy="198" r="38" fill="#0f2f21"/>
+              <g transform="translate(680 198)">
+                <g class="blades" fill="#dcebe0">
+                  <path d="M0 0C14 -8 18 -30 2 -36C-6 -26 -8 -10 0 0Z"/>
+                  <path transform="rotate(90)" d="M0 0C14 -8 18 -30 2 -36C-6 -26 -8 -10 0 0Z"/>
+                  <path transform="rotate(180)" d="M0 0C14 -8 18 -30 2 -36C-6 -26 -8 -10 0 0Z"/>
+                  <path transform="rotate(270)" d="M0 0C14 -8 18 -30 2 -36C-6 -26 -8 -10 0 0Z"/>
+                </g>
+              </g>
+              <circle cx="680" cy="198" r="6" fill="#8fb29e"/>
+              <circle cx="680" cy="198" r="38" fill="none" stroke="#5f8d75" stroke-width="2"/>
+              <path d="M680 160V236M642 198H718" stroke="#5f8d75" stroke-width="1.5" opacity=".6"/>
+              <circle id="ledFan" class="led" cx="712" cy="166" r="4"/>
+
+              <g class="airflow" fill="none">
+                <path d="M624 172C596 160 572 186 544 174S492 166 462 176"/>
+                <path d="M624 196C596 186 574 208 546 198S494 190 458 200"/>
+                <path d="M624 220C598 212 576 232 548 222S496 214 464 224"/>
+                <path d="M624 244C600 236 580 254 552 246S502 240 470 248"/>
+              </g>
+
+              <rect x="676" y="296" width="44" height="66" rx="10" fill="#f6faf3" stroke="#a9bfae" stroke-width="2"/>
+              <rect x="683" y="304" width="30" height="26" rx="5" fill="#173a2b"/>
+              <path d="M689 324l6-8 5 5 7-9" stroke="#7be0a4" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle id="ledClimate" class="led" cx="698" cy="345" r="4"/>
+              <path d="M690 354h16" stroke="#a9bfae" stroke-width="2" stroke-linecap="round"/>
+
+              <path d="M400 34V50" stroke="#2a5a43" stroke-width="3"/>
+              <circle cx="400" cy="60" r="10" fill="#f6faf3" stroke="#a9bfae" stroke-width="2"/>
+              <circle id="ledLight" class="led" cx="400" cy="60" r="4"/>
+
+              <ellipse cx="400" cy="508" rx="86" ry="9" fill="#000" opacity=".25"/>
+              <path d="M328 430L348 500Q400 514 452 500L472 430Z" fill="url(#gPot)"/>
+              <path d="M336 452Q400 466 464 452" stroke="#b7a98c" stroke-width="2" fill="none" opacity=".7"/>
+              <ellipse cx="400" cy="430" rx="74" ry="14" fill="#efe6d2" stroke="#c6b797" stroke-width="2"/>
+              <ellipse id="soil" cx="400" cy="431" rx="64" ry="9.5" fill="#6b4a2e"/>
+              <ellipse cx="392" cy="429" rx="28" ry="3" fill="#ffffff" opacity=".07"/>
+
+              <rect x="452" y="398" width="7" height="34" rx="3" fill="#e9efe6" stroke="#a9bfae"/>
+              <circle id="ledSoil" class="led" cx="455.5" cy="394" r="5"/>
+
+              <g transform="translate(400 431)">
+                <g id="plantPop">
+                  <g class="plant-sway">
+                    <g id="plantHealth" data-health="good">
+                      <g id="plantScale">
+                        <g id="plantArt"></g>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+
+              <g transform="translate(400 139)">
+                <path class="drop" style="--dx:-46px;animation-delay:-.9s"  d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+                <path class="drop" style="--dx:-34px;animation-delay:-.3s"  d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+                <path class="drop" style="--dx:-22px;animation-delay:-.6s"  d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+                <path class="drop" style="--dx:-11px;animation-delay:-.1s"  d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+                <path class="drop" style="--dx:0px;animation-delay:-.75s"   d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+                <path class="drop" style="--dx:11px;animation-delay:-.45s"  d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+                <path class="drop" style="--dx:22px;animation-delay:-.2s"   d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+                <path class="drop" style="--dx:34px;animation-delay:-1s"    d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+                <path class="drop" style="--dx:46px;animation-delay:-.55s"  d="M0-7C4-1 5 3 0 6C-5 3-4-1 0-7Z" fill="#57b5f0"/>
+              </g>
+              <ellipse class="ripple" cx="384" cy="431" rx="26" ry="5" fill="none" stroke="#a9dcf8" stroke-width="2"/>
+              <ellipse class="ripple" style="animation-delay:-.55s" cx="420" cy="431" rx="26" ry="5" fill="none" stroke="#a9dcf8" stroke-width="2"/>
+
+              <rect id="dim" y="34" width="800" height="530" fill="#061a33" opacity="0" pointer-events="none"/>
+
+              <g fill="url(#gBeam)" pointer-events="none">
+                <polygon class="beam" transform="translate(250 0)" points="-38,112 38,112 190,505 -190,505"/>
+                <polygon class="beam" transform="translate(550 0)" points="-38,112 38,112 190,505 -190,505"/>
+              </g>
+
+              <g class="lamp hot" data-act="lamp" role="button" tabindex="0" aria-label="Toggle grow light" transform="translate(250 0)">
+                <title>Grow light — press to switch</title>
+                <path d="M0 36V76" stroke="#0f2f21" stroke-width="3"/>
+                <ellipse class="halo" cx="0" cy="118" rx="90" ry="52" fill="url(#gHalo)" pointer-events="none"/>
+                <path d="M-48 106Q-34 74 0 74Q34 74 48 106Z" fill="#164d36" stroke="#0f2f21" stroke-width="2"/>
+                <rect class="bulb" x="-38" y="104" width="76" height="9" rx="4.5"/>
+                <rect class="hit" x="-58" y="66" width="116" height="56" rx="14"/>
+              </g>
+              <g class="lamp hot" data-act="lamp" role="button" tabindex="0" aria-label="Toggle grow light" transform="translate(550 0)">
+                <title>Grow light — press to switch</title>
+                <path d="M0 36V76" stroke="#0f2f21" stroke-width="3"/>
+                <ellipse class="halo" cx="0" cy="118" rx="90" ry="52" fill="url(#gHalo)" pointer-events="none"/>
+                <path d="M-48 106Q-34 74 0 74Q34 74 48 106Z" fill="#164d36" stroke="#0f2f21" stroke-width="2"/>
+                <rect class="bulb" x="-38" y="104" width="76" height="9" rx="4.5"/>
+                <rect class="hit" x="-58" y="66" width="116" height="56" rx="14"/>
+              </g>
+
+              <g pointer-events="none">
+                <polygon points="60,60 150,60 40,560 -50,560" fill="url(#gGlass)" opacity=".55"/>
+                <polygon points="190,60 226,60 116,560 80,560" fill="url(#gGlass)" opacity=".4"/>
+                <g id="fog" opacity="0">
+                  <rect width="800" height="560" fill="url(#gFog)"/>
+                  <g fill="#fff" fill-opacity=".55">
+                    <circle cx="86" cy="250" r="3"/><circle cx="104" cy="290" r="2.2"/><circle cx="70" cy="330" r="3.4"/>
+                    <circle cx="726" cy="262" r="3"/><circle cx="748" cy="312" r="2.4"/><circle cx="716" cy="352" r="3.2"/>
+                    <circle cx="150" cy="112" r="2.4"/><circle cx="640" cy="104" r="2.6"/><circle cx="330" cy="66" r="2"/><circle cx="478" cy="70" r="2.4"/>
+                  </g>
+                </g>
+              </g>
+
+              <g class="hot" data-act="pump" role="button" tabindex="0" aria-label="Water the plant">
+                <title>Pump — press to water</title>
+                <rect class="hit" x="93" y="274" width="48" height="46" rx="12"/>
+              </g>
+              <g class="hot" data-act="pump" role="button" tabindex="0" aria-label="Water the plant">
+                <title>Sprinkler — press to water</title>
+                <rect class="hit" x="378" y="112" width="44" height="30" rx="10"/>
+              </g>
+              <g class="hot" data-act="refill" role="button" tabindex="0" aria-label="Refill the water tank">
+                <title>Water tank — press to refill</title>
+                <rect class="hit" x="62" y="340" width="112" height="171" rx="18"/>
+              </g>
+              <g class="hot" data-act="fan" role="button" tabindex="0" aria-label="Toggle fan">
+                <title>Fan — press to switch</title>
+                <rect class="hit" x="626" y="144" width="108" height="108" rx="22"/>
+              </g>
+            </g>
+
+            <path d="M20 560V200Q20 30 400 30Q780 30 780 200V560" fill="none" stroke="#0a2a1c" stroke-width="12"/>
+            <path d="M20 560V200Q20 30 400 30Q780 30 780 200V560" fill="none" stroke="#dcebd9" stroke-width="4"/>
+          </svg>
+
+          <div class="clock" aria-live="off"><span id="clockIcon" aria-hidden="true">☀️</span><span id="clockText">Day 1, 10:44</span></div>
+          <p class="scene-tip" id="t-scene-tip">Tap the fan, lamps, pump or tank to control them</p>
+        </div>
+
+        <div class="growth">
+          <div class="growth-head">
+            <p class="growth-pct"><span aria-hidden="true">🌱</span> <span id="t-growth-lbl">Growth:</span> <b id="growthNum">0%</b></p>
+            <p class="stage-tag" id="stageTag">Stage: Seed</p>
+          </div>
+          <div class="track" id="growthBar" role="progressbar" aria-label="Plant growth" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <i id="growthFill"></i>
+          </div>
+          <div class="stage-labels" id="stageLabels" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <!-- ============ CHART ============ -->
+      <section class="card chart-card" aria-labelledby="h-chart">
+        <div class="chart-head">
+          <div>
+            <h2 id="t-chart-title">Temperature and humidity</h2>
+            <p class="sub" id="t-chart-sub">Last 5 simulated minutes. The green band is the ideal temperature range.</p>
+          </div>
+          <ul class="legend">
+            <li><i class="dot heat"></i><span id="t-leg-temp">Temperature</span> <b id="legTemp">24.5 °C</b></li>
+            <li><i class="dot water"></i><span id="t-leg-hum">Humidity</span> <b id="legHum">58 %</b></li>
+          </ul>
+        </div>
+        <div class="chart-box" id="chartBox">
+          <canvas id="chartCanvas" role="img" aria-label="Line chart of greenhouse temperature and air humidity over the last five simulated minutes"></canvas>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="col col-side">
+
+      <!-- ============ CONTROL PANEL ============ -->
+      <section class="card controls" aria-labelledby="h-controls">
+        <h2 id="t-controls-title">Control panel</h2>
+
+        <div class="seg mode-seg" id="modeSeg" data-value="auto" role="group" aria-label="Operating mode">
+          <button type="button" id="modeAuto" aria-pressed="true">🤖 AUTO MODE</button>
+          <button type="button" id="modeManual" aria-pressed="false">🖐 MANUAL MODE</button>
+        </div>
+        <p class="hint" id="modeHint"></p>
+
+        <div class="actions" id="actions">
+          <button type="button" class="act" id="act-pump" data-act="pump" aria-pressed="false">
+            <span class="ic" aria-hidden="true">💧</span>
+            <span class="lb" id="t-act-pump">Water Plant</span>
+            <span class="st"><i class="sw" aria-hidden="true"></i><em id="t-st-pump">OFF</em></span>
+          </button>
+          <button type="button" class="act" id="act-fan" data-act="fan" aria-pressed="false">
+            <span class="ic" aria-hidden="true">🌬</span>
+            <span class="lb" id="t-act-fan">Turn Fan ON</span>
+            <span class="st"><i class="sw" aria-hidden="true"></i><em id="t-st-fan">OFF</em></span>
+          </button>
+          <button type="button" class="act" id="act-lamp" data-act="lamp" aria-pressed="false">
+            <span class="ic" aria-hidden="true">💡</span>
+            <span class="lb" id="t-act-lamp">Turn Light ON</span>
+            <span class="st"><i class="sw" aria-hidden="true"></i><em id="t-st-lamp">OFF</em></span>
+          </button>
+          <button type="button" class="act act-refill" id="act-refill" data-act="refill">
+            <span class="ic" aria-hidden="true">🚰</span>
+            <span class="lb" id="t-act-refill">Refill Water Tank</span>
+            <span class="st"><i class="mini" aria-hidden="true"><b id="refillFill"></b></i><em>80%</em></span>
+          </button>
+        </div>
+
+        <div class="speed-row">
+          <span id="t-speed-lbl">Simulation speed</span>
+          <div class="seg small" id="speedSeg" role="group" aria-labelledby="speedLabel">
+            <button type="button" data-speed="1" aria-pressed="true">1×</button>
+            <button type="button" data-speed="2" aria-pressed="false">2×</button>
+            <button type="button" data-speed="4" aria-pressed="false">4×</button>
+          </div>
+        </div>
+
+        <button type="button" class="reset" id="resetBtn">🔄 RESET SIMULATION</button>
+      </section>
+
+      <!-- ============ PLANT HEALTH ============ -->
+      <section class="card health" id="healthCard" data-level="good" aria-labelledby="h-health">
+        <h2 id="t-health-title">Plant Health</h2>
+        <div class="health-main">
+          <span class="orb" aria-hidden="true"></span>
+          <div>
+            <p class="health-label" id="healthLabel">Health: Good</p>
+            <p class="health-note" id="healthNote">All conditions are in range</p>
+          </div>
+        </div>
+        <ul class="health-grid">
+          <li id="hr-temp" data-level="ok"><span class="k" id="t-hk-temp">🌡 Temperature</span><span class="v" id="hs-temp">Optimal</span></li>
+          <li id="hr-hum" data-level="ok"><span class="k" id="t-hk-hum">💧 Humidity</span><span class="v" id="hs-hum">Optimal</span></li>
+          <li id="hr-soil" data-level="ok"><span class="k" id="t-hk-soil">🌱 Soil</span><span class="v" id="hs-soil">Optimal</span></li>
+          <li id="hr-light" data-level="ok"><span class="k" id="t-hk-light">☀️ Light</span><span class="v" id="hs-light">Optimal</span></li>
+        </ul>
+      </section>
+
+      <!-- ============ SMART SYSTEM ============ -->
+      <section class="card system" aria-labelledby="h-system">
+        <h2 id="t-system-title">Smart System</h2>
+        <ul class="live" id="liveMsgs"></ul>
+        <h3 class="events-title" id="t-events-title">Recent events</h3>
+        <ol class="events" id="eventLog" aria-live="polite" aria-relevant="additions"></ol>
+      </section>
+
+    </div>
+
+  </main>
+
+  <footer class="foot" id="t-footer">Everything runs in your browser. No server, no libraries.</footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+/* ==========================================================
+   Smart Greenhouse — Virtual Agriculture Simulator
+   ========================================================== */
+(() => {
+  'use strict';
+
+  /* ---------- Translations (EN, RU, KZ) ---------- */
+
+  let currentLang = 'ru'; // Default to Russian as requested
+
+  const i18n = {
+    en: {
+      sysOnline: "SYSTEM ONLINE",
+      title: "SMART GREENHOUSE",
+      subtitle: "Virtual Agriculture Simulator",
+      sensorTemp: "Temperature",
+      sensorHum: "Air Humidity",
+      sensorSoil: "Soil Moisture",
+      sensorLight: "Light",
+      sensorWater: "Water Tank",
+      targetTemp: "Ideal 19–29 °C",
+      targetHum: "Ideal 40–75 %",
+      targetSoil: "Ideal 35–75 %",
+      targetLight: "Ideal 40–90 %",
+      targetWater: "Alert below 15 %",
+      sceneTip: "Tap the fan, lamps, pump or tank to control them",
+      growthLbl: "Growth:",
+      stageNames: ['Seed', 'Sprout', 'Small Plant', 'Young Plant', 'Mature Plant'],
+      stagePrefix: "Stage: ",
+      chartTitle: "Temperature and humidity",
+      chartSub: "Last 5 simulated minutes. The green band is the ideal temperature range.",
+      legTemp: "Temperature",
+      legHum: "Humidity",
+      controlsTitle: "Control panel",
+      autoModeBtn: "🤖 AUTO MODE",
+      manualModeBtn: "🖐 MANUAL MODE",
+      autoHint: "Auto mode: the greenhouse waters, cools and lights the plant by itself. Press any device to take over.",
+      manualHint: "Manual mode: you control the pump, fan and light. Automation is paused.",
+      waterPlant: "Water Plant",
+      stopWatering: "Stop Watering",
+      turnFanOn: "Turn Fan ON",
+      turnFanOff: "Turn Fan OFF",
+      turnLightOn: "Turn Light ON",
+      turnLightOff: "Turn Light OFF",
+      refillTank: "Refill Water Tank",
+      simSpeed: "Simulation speed",
+      resetSim: "🔄 RESET SIMULATION",
+      plantHealthTitle: "Plant Health",
+      hkTemp: "🌡 Temperature",
+      hkHum: "💧 Humidity",
+      hkSoil: "🌱 Soil",
+      hkLight: "☀️ Light",
+      smartSystem: "Smart System",
+      recentEvents: "Recent events",
+      footer: "Everything runs in your browser. No server, no libraries.",
+      statuses: {
+        optimal: "Optimal",
+        tooCold: "Too cold",
+        cold: "Cold",
+        cool: "Cool",
+        warm: "Warm",
+        tooHot: "Too hot",
+        tooDry: "Too dry",
+        dry: "Dry",
+        humid: "Humid",
+        tooHumid: "Too humid",
+        veryDry: "Very dry",
+        wet: "Wet",
+        waterlogged: "Waterlogged",
+        dark: "Dark",
+        low: "Low",
+        veryBright: "Very bright",
+        empty: "Empty",
+        lowWater: "Low Water Level",
+        ok: "OK"
+      },
+      health: {
+        good: "Good",
+        warning: "Warning",
+        critical: "Critical",
+        noteGood: "All conditions are in range",
+        noteWarning: "Some conditions need attention",
+        noteCritical: "The plant is under stress — act now"
+      }
+    },
+    ru: {
+      sysOnline: "СИСТЕМА В СЕТИ",
+      title: "УМНАЯ ТЕПЛИЦА",
+      subtitle: "Виртуальный симулятор сельского хозяйства",
+      sensorTemp: "Температура",
+      sensorHum: "Влажность воздуха",
+      sensorSoil: "Влажность почвы",
+      sensorLight: "Освещение",
+      sensorWater: "Резервуар воды",
+      targetTemp: "Идеал 19–29 °C",
+      targetHum: "Идеал 40–75 %",
+      targetSoil: "Идеал 35–75 %",
+      targetLight: "Идеал 40–90 %",
+      targetWater: "Тревога ниже 15 %",
+      sceneTip: "Нажмите на вентилятор, лампы, насос или бак для управления",
+      growthLbl: "Рост:",
+      stageNames: ['Семечко', 'Росток', 'Маленькое растение', 'Молодое растение', 'Взрослое растение'],
+      stagePrefix: "Стадия: ",
+      chartTitle: "Температура и влажность",
+      chartSub: "Последние 5 смоделированных минут. Зеленая полоса — идеальный диапазон температуры.",
+      legTemp: "Температура",
+      legHum: "Влажность",
+      controlsTitle: "Панель управления",
+      autoModeBtn: "🤖 АВТОМАТИЧЕСКИЙ РЕЖИМ",
+      manualModeBtn: "🖐 РУЧНОЙ РЕЖИМ",
+      autoHint: "Автоматический режим: теплица поливает, охлаждает и освещает растение сама. Нажмите на устройство для ручного управления.",
+      manualHint: "Ручной режим: вы управляете насосом, вентилятором и светом. Автоматика приостановлена.",
+      waterPlant: "Полить растение",
+      stopWatering: "Остановить полив",
+      turnFanOn: "Включить вентилятор",
+      turnFanOff: "Выключить вентилятор",
+      turnLightOn: "Включить свет",
+      turnLightOff: "Выключить свет",
+      refillTank: "Заполнить резервуар",
+      simSpeed: "Скорость симуляции",
+      resetSim: "🔄 СБРОСИТЬ СИМУЛЯЦИЮ",
+      plantHealthTitle: "Здоровье растения",
+      hkTemp: "🌡 Температура",
+      hkHum: "💧 Влажность",
+      hkSoil: "🌱 Почва",
+      hkLight: "☀️ Свет",
+      smartSystem: "Умная система",
+      recentEvents: "Последние события",
+      footer: "Всё работает в вашем браузере. Без сервера и библиотек.",
+      statuses: {
+        optimal: "Оптимально",
+        tooCold: "Слишком холодно",
+        cold: "Холодно",
+        cool: "Прохладно",
+        warm: "Тепло",
+        tooHot: "Слишком жарко",
+        tooDry: "Слишком сухо",
+        dry: "Сухо",
+        humid: "Влажно",
+        tooHumid: "Слишком влажно",
+        veryDry: "Очень сухо",
+        wet: "Сыро",
+        waterlogged: "Переувлажнено",
+        dark: "Темно",
+        low: "Низкое",
+        veryBright: "Очень ярко",
+        empty: "Пусто",
+        lowWater: "Низкий уровень воды",
+        ok: "ОК"
+      },
+      health: {
+        good: "Хорошее",
+        warning: "Внимание",
+        critical: "Критическое",
+        noteGood: "Все показатели в норме",
+        noteWarning: "Некоторые показатели требуют внимания",
+        noteCritical: "Растение испытывает стресс — действуйте"
+      }
+    },
+    kz: {
+      sysOnline: "ЖҮЙЕ ОНЛАЙН",
+      title: "АҚЫЛДЫ ЖЫЛЫЖАЙ",
+      subtitle: "Виртуалды ауыл шаруашылығы симуляторы",
+      sensorTemp: "Температура",
+      sensorHum: "Ауа ылғалдылығы",
+      sensorSoil: "Топырақ ылғалдылығы",
+      sensorLight: "Жарық",
+      sensorWater: "Су резервуары",
+      targetTemp: "Идеал 19–29 °C",
+      targetHum: "Идеал 40–75 %",
+      targetSoil: "Идеал 35–75 %",
+      targetLight: "Идеал 40–90 %",
+      targetWater: "15%-дан төмен ескерту",
+      sceneTip: "Басқару үшін желдеткішті, шамдарды, сорғыны немесе бакты түртіңіз",
+      growthLbl: "Өсуі:",
+      stageNames: ['Тұқым', 'Өркен', 'Кішкентай өсімдік', 'Жас өсімдік', 'Жетілген өсімдік'],
+      stagePrefix: "Кезеңі: ",
+      chartTitle: "Температура және ылғалдылық",
+      chartSub: "Соңғы 5 минут. Жасыл жолақ — температураның идеалды диапазоны.",
+      legTemp: "Температура",
+      legHum: "Ылғалдылық",
+      controlsTitle: "Басқару панелі",
+      autoModeBtn: "🤖 АВТОМАТТЫ РЕЖИМ",
+      manualModeBtn: "🖐 ҚОЛМЕН РЕЖИМ",
+      autoHint: "Автоматты режим: жылыжай өсімдікті өзі суарады, салқындатады және жарықтандырады. Бақылауды алу үшін кез келген құрылғыны басыңыз.",
+      manualHint: "Қолмен режим: сорғыны, желдеткішті және жарықты өзіңіз басқарасыз. Автоматика тоқтатылды.",
+      waterPlant: "Өсімдікті суару",
+      stopWatering: "Суаруды тоқтату",
+      turnFanOn: "Желдеткішті қосу",
+      turnFanOff: "Желдеткішті сөндіру",
+      turnLightOn: "Жарықты қосу",
+      turnLightOff: "Жарықты сөндіру",
+      refillTank: "Су резервуарын толтыру",
+      simSpeed: "Симуляция жылдамдығы",
+      resetSim: "🔄 СИМУЛЯЦИЯНЫ ҚАЙТА БАСТАУ",
+      plantHealthTitle: "Өсімдік денсаулығы",
+      hkTemp: "🌡 Температура",
+      hkHum: "💧 Ылғалдылық",
+      hkSoil: "🌱 Топырақ",
+      hkLight: "☀️ Жарық",
+      smartSystem: "Ақылды жүйе",
+      recentEvents: "Соңғы оқиғалар",
+      footer: "Бәрі браузерде жұмыс істейді. Серверсіз, кітапханаларсыз.",
+      statuses: {
+        optimal: "Оңтайлы",
+        tooCold: "Тым суық",
+        cold: "Суық",
+        cool: "Салқын",
+        warm: "Жылы",
+        tooHot: "Тым ыстық",
+        tooDry: "Тым құрғақ",
+        dry: "Құрғақ",
+        humid: "Ылғалды",
+        tooHumid: "Тым ылғалды",
+        veryDry: "Өте құрғақ",
+        wet: "Сулы",
+        waterlogged: "Шамадан тыс ылғал",
+        dark: "Қараңғы",
+        low: "Төмен",
+        veryBright: "Өте жарқын",
+        empty: "Бос",
+        lowWater: "Су деңгейі төмен",
+        ok: "ОК"
+      },
+      health: {
+        good: "Жақсы",
+        warning: "Ескерту",
+        critical: "Сыни",
+        noteGood: "Барлық көрсеткіштер қалыпты",
+        noteWarning: "Кейбір көрсеткіштер назар аударуды қажет етеді",
+        noteCritical: "Өсімдік күйзелісте — әрекет етіңіз"
+      }
+    }
+  };
+
+  function t(key) {
+    return i18n[currentLang][key] || i18n['ru'][key] || key;
+  }
+
+  function tStatus(statusKey) {
+    return i18n[currentLang].statuses[statusKey] || statusKey;
+  }
+
+  /* ---------- Configuration ---------- */
+
+  const CFG = {
+    tickMs: 500,
+    stepSec: 0.5,
+    dayLength: 240,
+    clockOffset: 10.74,
+    growthEvery: 3,
+    growthMax: 100,
+    historyEvery: 2,
+    historyWindow: 300,
+    logLimit: 40,
+    stages: [
+      { nameKey: 0, from: 0, icon: '🌰' },
+      { nameKey: 1, from: 12, icon: '🌱' },
+      { nameKey: 2, from: 32, icon: '🌿' },
+      { nameKey: 3, from: 58, icon: '🪴' },
+      { nameKey: 4, from: 88, icon: '🌳' }
+    ],
+    limits: {
+      fanOn: 30, fanOff: 27,
+      tempLow: 18,
+      soilOn: 35, soilOff: 65,
+      lightOn: 30, lightOff: 70,
+      waterLow: 15
+    }
+  };
+
+  const RANGES = {
+    temp:  { min: 10, max: 40,  ok: [19, 29] },
+    hum:   { min: 0,  max: 100, ok: [40, 75] },
+    soil:  { min: 0,  max: 100, ok: [35, 75] },
+    light: { min: 0,  max: 100, ok: [40, 90] },
+    water: { min: 0,  max: 100, ok: [15, 100] }
+  };
+
+  const RING = 2 * Math.PI * 40;
+  const SWEEP = RING * 0.75;
+
+  const SENSOR_KEYS = ['temp', 'hum', 'soil', 'light', 'water'];
+  const NAMES = { temp: 'temperature', hum: 'humidity', soil: 'soil', light: 'light' };
+  const COL = { heat: '#e2503b', water: '#3a98dd' };
+
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const pad2 = n => String(n).padStart(2, '0');
+  const jitter = amp => (Math.random() - 0.5) * amp;
+
+  function ambientTemp(t)  { return 24.5 + 9 * Math.sin(2 * Math.PI * t / CFG.dayLength); }
+  function ambientLight(t) { return 50 + 38 * Math.sin(2 * Math.PI * t / CFG.dayLength + 1); }
+
+  function hourOf(t) { return (CFG.clockOffset + t / (CFG.dayLength / 24)) % 24; }
+  function dayOf(t)  { return Math.floor((CFG.clockOffset + t / (CFG.dayLength / 24)) / 24) + 1; }
+  function fmtClock(t) {
+    const h = hourOf(t);
+    const hh = Math.floor(h);
+    return pad2(hh) + ':' + pad2(Math.floor((h - hh) * 60));
+  }
+
+  function createState() {
+    return {
+      time: 0,
+      mode: 'auto',
+      speed: 1,
+      temp: 24.5, hum: 58, soil: 52, light: 82, water: 80,
+      fan: false, pump: false, lamp: false,
+      points: 0,
+      stage: 0,
+      growthTimer: 0,
+      historyTimer: 0,
+      history: [{ t: 0, temp: 24.5, hum: 58 }],
+      log: [{ t: 0, icon: '🟢', text: 'Симуляция запущена в автоматическом режиме', tone: 'ok' }],
+      flags: { lowTemp: false, lowWater: false, empty: false }
+    };
+  }
+
+  let s = createState();
+  let logDirty = true;
+  let plantKey = '';
+  let lastMsgSig = '';
+
+  function log(icon, text, tone) {
+    s.log.unshift({ t: s.time, icon, text, tone: tone || 'info' });
+    if (s.log.length > CFG.logLimit) s.log.length = CFG.logLimit;
+    logDirty = true;
+  }
+
+  function reading() {
+    return {
+      temp: Math.round(s.temp * 10) / 10,
+      hum: Math.round(s.hum),
+      soil: Math.round(s.soil),
+      light: Math.round(s.light),
+      water: Math.round(s.water)
+    };
+  }
+
+  const lv = (level, labelKey) => ({ level, labelKey });
+
+  function classify(r) {
+    const c = {};
+    c.temp =
+      r.temp < 14 ? lv('bad', 'tooCold') :
+      r.temp < 18 ? lv('warn', 'cold') :
+      r.temp < 19 ? lv('warn', 'cool') :
+      r.temp <= 29 ? lv('ok', 'optimal') :
+      r.temp <= 32 ? lv('warn', 'warm') : lv('bad', 'tooHot');
+    c.hum =
+      r.hum < 30 ? lv('bad', 'tooDry') :
+      r.hum < 40 ? lv('warn', 'dry') :
+      r.hum <= 75 ? lv('ok', 'optimal') :
+      r.hum <= 85 ? lv('warn', 'humid') : lv('bad', 'tooHumid');
+    c.soil =
+      r.soil < 20 ? lv('bad', 'veryDry') :
+      r.soil < 35 ? lv('warn', 'dry') :
+      r.soil <= 75 ? lv('ok', 'optimal') :
+      r.soil <= 88 ? lv('warn', 'wet') : lv('bad', 'waterlogged');
+    c.light =
+      r.light < 15 ? lv('bad', 'dark') :
+      r.light < 40 ? lv('warn', 'low') :
+      r.light <= 90 ? lv('ok', 'optimal') : lv('warn', 'veryBright');
+    c.water =
+      r.water <= 0 ? lv('bad', 'empty') :
+      r.water < CFG.limits.waterLow ? lv('warn', 'lowWater') : lv('ok', 'ok');
+
+    const levels = [c.temp, c.hum, c.soil, c.light].map(x => x.level);
+    c.health = levels.includes('bad') ? 'critical' : levels.includes('warn') ? 'warning' : 'good';
+    c.growable = c.temp.level === 'ok' && c.soil.level === 'ok' && c.light.level === 'ok';
+    return c;
+  }
+
+  function simulate(dt) {
+    const ambT = ambientTemp(s.time);
+    const ambL = ambientLight(s.time);
+
+    const tTarget = ambT + (s.lamp ? 1 : 0) - (s.fan ? 8 : 0);
+    const kT = s.fan ? 0.07 : 0.04;
+    s.temp += (tTarget - s.temp) * kT * dt + jitter(0.03);
+
+    const lTarget = clamp(ambL + (s.lamp ? 36 : 0), 0, 100);
+    s.light += (lTarget - s.light) * 0.12 * dt + jitter(0.08);
+
+    const evap = 0.10 + Math.max(0, s.temp - 20) * 0.008 + (s.fan ? 0.03 : 0);
+    s.soil -= evap * dt;
+    if (s.pump && s.water > 0) {
+      s.soil += 1.6 * dt;
+      s.water -= 1.2 * dt;
+    }
+
+    const hTarget = clamp(34 + s.soil * 0.38 - (s.temp - 24) * 0.9 + (s.pump ? 9 : 0) - (s.fan ? 6 : 0), 20, 95);
+    s.hum += (hTarget - s.hum) * 0.05 * dt + jitter(0.05);
+
+    s.temp = clamp(s.temp, 0, 50);
+    s.hum = clamp(s.hum, 0, 100);
+    s.soil = clamp(s.soil, 0, 100);
+    s.light = clamp(s.light, 0, 100);
+    s.water = clamp(s.water, 0, 100);
+  }
+
+  const ICON = { pump: '💧', fan: '🌬', lamp: '💡' };
+
+  function setDevice(name, on, text, tone) {
+    if (s[name] === on) return;
+    s[name] = on;
+    log(on ? ICON[name] : '⏹', text, tone);
+  }
+
+  function runAuto(r) {
+    const L = CFG.limits;
+    if (!s.fan && r.temp > L.fanOn) {
+      setDevice('fan', true, `Вентиляция активирована при ${r.temp.toFixed(1)}°C`);
+    } else if (s.fan && r.temp <= L.fanOff) {
+      setDevice('fan', false, 'Вентиляция выключена — температура в норме');
+    }
+
+    if (!s.pump && r.soil < L.soilOn && s.water > 0) {
+      setDevice('pump', true, `Автоматический полив включен — почва ${r.soil}%`);
+    } else if (s.pump && r.soil >= L.soilOff) {
+      setDevice('pump', false, `Автоматический полив завершен — почва ${r.soil}%`);
+    }
+
+    if (!s.lamp && r.light < L.lightOn) {
+      setDevice('lamp', true, `Фитолампа включена — свет ${r.light}%`);
+    } else if (s.lamp && r.light >= L.lightOff) {
+      setDevice('lamp', false, 'Фитолампа выключена — света достаточно');
+    }
+  }
+
+  function safety() {
+    if (s.pump && s.water <= 0) {
+      s.water = 0;
+      setDevice('pump', false, 'Резервуар пуст — насос остановлен', 'warn');
+    } else if (s.pump && s.mode === 'manual' && s.soil >= 95) {
+      setDevice('pump', false, 'Почва переувлажнена — полив остановлен', 'warn');
+    }
+  }
+
+  function watchWarnings(r) {
+    const f = s.flags;
+    const L = CFG.limits;
+    if (!f.lowTemp && r.temp < L.tempLow) {
+      f.lowTemp = true;
+      log('⚠️', `Низкая температура: ${r.temp.toFixed(1)}°C`, 'warn');
+    } else if (f.lowTemp && r.temp >= L.tempLow + 1) {
+      f.lowTemp = false;
+    }
+
+    if (!f.lowWater && r.water < L.waterLow) {
+      f.lowWater = true;
+      log('⚠️', 'Низкий уровень воды в резервуаре', 'warn');
+    } else if (f.lowWater && r.water >= L.waterLow + 5) {
+      f.lowWater = false;
+    }
+
+    if (!f.empty && s.water <= 0) {
+      f.empty = true;
+      log('🚫', 'Резервуар для воды пуст', 'bad');
+    } else if (f.empty && s.water > 0) {
+      f.empty = false;
+    }
+  }
+
+  function growthCheck(c) {
+    if (s.points >= CFG.growthMax) return;
+    if (c.growable) {
+      s.points = Math.min(CFG.growthMax, s.points + 1 + (c.hum.level === 'ok' ? 0.5 : 0));
+    }
+
+    const pct = s.points / CFG.growthMax * 100;
+    let idx = 0;
+    CFG.stages.forEach((st, i) => { if (pct >= st.from) idx = i; });
+
+    if (idx > s.stage) {
+      s.stage = idx;
+      log(CFG.stages[idx].icon, `Достигнута стадия роста: ${i18n[currentLang].stageNames[idx]}`, 'ok');
+    }
+    if (s.points >= CFG.growthMax) log('🌳', 'Растение полностью выросло', 'ok');
+  }
+
+  function step(dt) {
+    s.time += dt;
+    simulate(dt);
+
+    const r = reading();
+    safety();
+    if (s.mode === 'auto') runAuto(r);
+    watchWarnings(r);
+
+    s.growthTimer += dt;
+    if (s.growthTimer >= CFG.growthEvery) {
+      s.growthTimer -= CFG.growthEvery;
+      growthCheck(classify(r));
+    }
+
+    s.historyTimer += dt;
+    if (s.historyTimer >= CFG.historyEvery) {
+      s.historyTimer -= CFG.historyEvery;
+      s.history.push({ t: s.time, temp: r.temp, hum: r.hum });
+      const cutoff = s.time - CFG.historyWindow - 30;
+      while (s.history.length && s.history[0].t < cutoff) s.history.shift();
+    }
+  }
+
+  function tick() {
+    for (let i = 0; i < s.speed; i++) step(CFG.stepSec);
+    render();
+  }
+
+  const els = {};
+  [
+    'scene', 'night', 'dusk', 'dim', 'fog', 'stars', 'sunG', 'moonG', 'soil', 'tankWater', 'plantHealth', 'plantScale', 'plantPop', 'plantArt',
+    'ledClimate', 'ledLight', 'ledSoil', 'ledPump', 'ledFan',
+    'clockIcon', 'clockText',
+    'growthNum', 'growthFill', 'growthBar', 'stageTag', 'stageLabels',
+    'healthCard', 'healthLabel', 'healthNote',
+    'liveMsgs', 'eventLog',
+    'modeSeg', 'modeAuto', 'modeManual', 'modeHint', 'actions', 'speedSeg', 'resetBtn', 'refillFill', 'toast',
+    'chartCanvas', 'chartBox', 'legTemp', 'legHum', 'langSeg'
+  ].forEach(id => { els[id] = $(id); });
+
+  els.act = { pump: $('act-pump'), fan: $('act-fan'), lamp: $('act-lamp'), refill: $('act-refill') };
+
+  const LEAF_D = 'M0 0C14 -20 50 -22 74 0C50 22 14 20 0 0Z';
+
+  function leaf(x, y, ang, sc, alt) {
+    return `<g transform="translate(${x} ${y}) rotate(${ang}) scale(${sc})">` +
+      `<path d="${LEAF_D}" fill="url(#${alt ? 'leafB' : 'leafA'})"/>` +
+      `<path d="M4 0H62" stroke="#1f6b35" stroke-opacity=".45" stroke-width="1.6" stroke-linecap="round" fill="none"/></g>`;
+  }
+
+  function pair(y, sc, spread) {
+    return leaf(0, y, -spread, sc, false) + leaf(0, y - 10, -(180 - spread), sc, true);
+  }
+
+  function stem(h, w) {
+    return `<path d="M0 0C3 ${-h * 0.3} -3 ${-h * 0.7} 0 ${-h}" stroke="#3d8b3f" stroke-width="${w}" stroke-linecap="round" fill="none"/>`;
+  }
+
+  function flower(x, y, sc) {
+    let petals = '';
+    for (let i = 0; i < 5; i++) {
+      petals += `<ellipse cx="0" cy="-8" rx="5" ry="8" transform="rotate(${i * 72})" fill="#fff5f2"/>`;
+    }
+    return `<g transform="translate(${x} ${y}) scale(${sc})">${petals}<circle r="4.2" fill="#f6c445"/></g>`;
+  }
+
+  function berry(x1, y1, x2, y2) {
+    return `<path d="M${x1} ${y1}Q${(x1 + x2) / 2} ${y1 + 6} ${x2} ${y2}" stroke="#3d8b3f" stroke-width="2.5" fill="none" stroke-linecap="round"/>` +
+      `<circle cx="${x2}" cy="${y2 + 6}" r="8.5" fill="#e5533d"/>` +
+      `<circle cx="${x2 - 3}" cy="${y2 + 3}" r="2.4" fill="#fff" opacity=".55"/>`;
+  }
+
+  function plantMarkup(stage, full) {
+    switch (stage) {
+      case 0:
+        return '<ellipse cx="0" cy="-2" rx="15" ry="4.5" fill="#4d3320" opacity=".55"/>' +
+          '<ellipse cx="0" cy="-6" rx="7.5" ry="5.5" fill="#8b5a2b"/>' +
+          '<path d="M-4.5 -8Q0 -12 4.5 -8" fill="none" stroke="#c19a5e" stroke-width="1.6" stroke-linecap="round"/>';
+      case 1:
+        return stem(34, 3.5) +
+          leaf(0, -15, -25, 0.3, false) + leaf(0, -15, -155, 0.3, true) +
+          leaf(0, -34, -45, 0.45, false) + leaf(0, -34, -135, 0.45, true);
+      case 2:
+        return stem(88, 4.5) +
+          pair(-28, 0.55, 32) + pair(-50, 0.7, 40) + pair(-72, 0.62, 34) +
+          leaf(0, -88, -90, 0.5, true);
+      case 3:
+        return stem(152, 6) +
+          pair(-30, 0.85, 30) + pair(-56, 1, 38) + pair(-84, 1.05, 32) +
+          pair(-110, 0.92, 40) + pair(-134, 0.72, 34) +
+          leaf(0, -152, -90, 0.6, false);
+      default: {
+        let m = stem(214, 7.5) +
+          pair(-34, 0.95, 30) + pair(-62, 1.1, 38) + pair(-92, 1.15, 32) +
+          pair(-120, 1.1, 40) + pair(-148, 1, 33) + pair(-174, 0.85, 40) + pair(-196, 0.65, 34) +
+          leaf(0, -214, -90, 0.62, false) +
+          flower(-24, -212, 0.95) + flower(24, -202, 0.85) + flower(0, -232, 0.9);
+        if (full) {
+          m += berry(0, -120, -40, -98) + berry(0, -148, 42, -126) + berry(0, -92, -32, -70);
+        }
+        return m;
+      }
+    }
+  }
+
+  function renderPlant(pct) {
+    const full = s.points >= CFG.growthMax;
+    const key = s.stage + (full ? 'f' : '');
+    if (key !== plantKey) {
+      const animate = plantKey !== '';
+      els.plantArt.innerHTML = plantMarkup(s.stage, full);
+      plantKey = key;
+      if (animate) {
+        els.plantPop.classList.remove('pop');
+        void els.plantPop.getBoundingClientRect();
+        els.plantPop.classList.add('pop');
+      }
+    }
+    const cur = CFG.stages[s.stage].from;
+    const next = s.stage < CFG.stages.length - 1 ? CFG.stages[s.stage + 1].from : 100;
+    const prog = clamp((pct - cur) / (next - cur), 0, 1);
+    const sc = s.stage === 0 ? 1 : 0.86 + 0.14 * prog;
+    els.plantScale.style.transform = `scale(${sc.toFixed(3)})`;
+  }
+
+  function renderSensors(r, c) {
+    SENSOR_KEYS.forEach(k => {
+      const val = r[k];
+      const st = c[k];
+      const R = RANGES[k];
+      const frac = clamp((val - R.min) / (R.max - R.min), 0, 1);
+      $('v-' + k).textContent = k === 'temp' ? val.toFixed(1) : String(val);
+      $('m-' + k).style.strokeDasharray = (frac * SWEEP).toFixed(1) + ' ' + RING.toFixed(2);
+      $('c-' + k).textContent = tStatus(st.labelKey);
+      $('s-' + k).dataset.level = st.level;
+    });
+  }
+
+  const SOIL_DRY = [158, 124, 82];
+  const SOIL_WET = [56, 36, 22];
+  function mixColor(a, b, t) {
+    return 'rgb(' + [0, 1, 2].map(i => Math.round(a[i] + (b[i] - a[i]) * t)).join(',') + ')';
+  }
+
+  const RANK = { ok: 0, warn: 1, bad: 2 };
+  const worst = (...items) => items.reduce((a, b) => (RANK[b.level] > RANK[a.level] ? b : a)).level;
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+  function placeBody(g, u, strength) {
+    if (u < 0 || u > 1) { g.setAttribute('opacity', '0'); return; }
+    const x = 110 + 580 * u;
+    const y = 400 - 300 * Math.sin(Math.PI * u);
+    g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+    g.setAttribute('opacity', (strength * Math.min(1, Math.min(u, 1 - u) * 6)).toFixed(2));
+  }
+
+  function renderScene(r, c) {
+    const svg = els.scene;
+    svg.classList.toggle('pump-on', s.pump);
+    svg.classList.toggle('fan-on', s.fan);
+    svg.classList.toggle('lamp-on', s.lamp);
+
+    els.soil.style.fill = mixColor(SOIL_DRY, SOIL_WET, clamp(s.soil / 100, 0, 1));
+    els.tankWater.style.transform = `scaleY(${clamp(s.water / 100, 0, 1).toFixed(3)})`;
+
+    const hour = hourOf(s.time);
+    const dl = clamp((ambientLight(s.time) - 12) / 76, 0, 1);
+    const night = 1 - smooth(0.28, 0.62, dl);
+    const dusk = Math.max(0, 1 - Math.abs(dl - 0.5) / 0.22) * 0.55;
+    els.night.setAttribute('opacity', (night * 0.88).toFixed(2));
+    els.dusk.setAttribute('opacity', dusk.toFixed(2));
+    els.dim.setAttribute('opacity', (night * 0.34).toFixed(2));
+    els.stars.setAttribute('opacity', clamp(night * 1.3 - 0.2, 0, 1).toFixed(2));
+    placeBody(els.sunG, (hour - 6.9) / 12, 1);
+    placeBody(els.moonG, ((hour - 18.9 + 24) % 24) / 12, clamp(night * 1.4, 0, 1));
+    els.fog.setAttribute('opacity', (clamp((r.hum - 55) / 40, 0, 1) * 0.6).toFixed(2));
+    document.documentElement.style.setProperty('--day', (1 - night).toFixed(2));
+
+    els.ledClimate.dataset.level = worst(c.temp, c.hum);
+    els.ledLight.dataset.level = c.light.level;
+    els.ledSoil.dataset.level = c.soil.level;
+    els.ledPump.dataset.level = s.pump ? 'ok' : '';
+    els.ledFan.dataset.level = s.fan ? 'ok' : '';
+
+    els.plantHealth.dataset.health = c.health;
+
+    els.clockIcon.textContent = ambientLight(s.time) >= 35 ? '☀️' : '🌙';
+    els.clockText.textContent = (currentLang === 'kz' ? 'Күн ' : currentLang === 'en' ? 'Day ' : 'День ') + dayOf(s.time) + ', ' + fmtClock(s.time);
+  }
+
+  function renderGrowth() {
+    const pct = Math.min(100, s.points / CFG.growthMax * 100);
+    const shown = Math.floor(pct + 1e-9);
+    els.growthNum.textContent = shown + '%';
+    els.growthFill.style.width = pct.toFixed(1) + '%';
+    els.growthBar.setAttribute('aria-valuenow', String(shown));
+    els.stageTag.textContent = t('stagePrefix') + i18n[currentLang].stageNames[s.stage];
+    const state = i => (i < s.stage ? 'done' : i === s.stage ? 'now' : '');
+    Array.from(els.stageLabels.children).forEach((el, i) => { el.className = state(i); });
+    els.growthBar.querySelectorAll('.node').forEach((el, i) => { el.className = 'node ' + state(i); });
+    renderPlant(pct);
+  }
+
+  function renderHealth(c) {
+    const hLabels = i18n[currentLang].health;
+    els.healthCard.dataset.level = c.health;
+    els.healthLabel.textContent = t('plantHealthTitle') + ': ' + hLabels[c.health];
+    els.healthNote.textContent = hLabels['note' + c.health.charAt(0).toUpperCase() + c.health.slice(1)];
+    ['temp', 'hum', 'soil', 'light'].forEach(k => {
+      $('hs-' + k).textContent = tStatus(c[k].labelKey);
+      $('hr-' + k).dataset.level = c[k].level;
+    });
+  }
+
+  function liveMessages(r, c) {
+    const m = [];
+    const auto = s.mode === 'auto';
+    const st = i18n[currentLang].statuses;
+
+    if (r.water <= 0) m.push(['🚫', currentLang === 'kz' ? 'Су резервуары бос — толтырыңыз' : currentLang === 'en' ? 'Water tank is empty — refill it' : 'Резервуар пуст — заполните его', 'bad']);
+    else if (r.water < CFG.limits.waterLow) m.push(['⚠️', currentLang === 'kz' ? 'Су деңгейі төмен' : currentLang === 'en' ? 'Water tank is low' : 'Низкий уровень воды', 'warn']);
+
+    if (r.temp < CFG.limits.tempLow) m.push(['⚠️', (currentLang === 'kz' ? 'Төмен температура: ' : currentLang === 'en' ? 'Low temperature: ' : 'Низкая температура: ') + r.temp.toFixed(1) + '°C', 'warn']);
+    else if (r.temp > 32) m.push(['🔥', (currentLang === 'kz' ? 'Тым ыстық: ' : currentLang === 'en' ? 'Too hot: ' : 'Слишком жарко: ') + r.temp.toFixed(1) + '°C', 'bad']);
+    else if (r.temp > CFG.limits.fanOn && !s.fan) m.push(['🔥', (currentLang === 'kz' ? 'Жоғары температура: ' : currentLang === 'en' ? 'High temperature: ' : 'Высокая температура: ') + r.temp.toFixed(1) + '°C', 'warn']);
+
+    if (r.soil > 88) m.push(['💦', currentLang === 'kz' ? 'Топырақ тым ылғалды' : currentLang === 'en' ? 'Soil is waterlogged' : 'Почва переувлажнена', 'bad']);
+    if (r.light > 90) m.push(['☀️', currentLang === 'kz' ? 'Жарық тым жарқын' : currentLang === 'en' ? 'Light is too intense' : 'Слишком яркий свет', 'warn']);
+
+    if (s.pump) m.push(['💧', auto ? (currentLang === 'kz' ? 'Автоматты суару қосылды' : currentLang === 'en' ? 'Automatic watering activated' : 'Автоматический полив включен') : (currentLang === 'kz' ? 'Суару жүруде (қолмен)' : currentLang === 'en' ? 'Watering in progress (manual)' : 'Полив (ручной режим)'), 'info']);
+    if (s.fan)  m.push(['🌬', auto ? (currentLang === 'kz' ? 'Салқындату жүйесі қосылды' : currentLang === 'en' ? 'Cooling system activated' : 'Вентиляция включена') : (currentLang === 'kz' ? 'Желдеткіш жұмыс істеуде (қолмен)' : currentLang === 'en' ? 'Fan is running (manual)' : 'Вентилятор работает (ручной режим)'), 'info']);
+    if (s.lamp) m.push(['💡', auto ? (currentLang === 'kz' ? 'Фитолампа қосылды' : currentLang === 'en' ? 'Grow light activated' : 'Фитолампа включена') : (currentLang === 'kz' ? 'Фитолампа жанып тұр (қолмен)' : currentLang === 'en' ? 'Grow light is on (manual)' : 'Фитолампа включена (ручной режим)'), 'info']);
+
+    if (s.points >= CFG.growthMax) {
+      m.push(['🌳', currentLang === 'kz' ? 'Өсімдік толық өсті' : currentLang === 'en' ? 'Plant is fully grown' : 'Растение полностью выросло', 'ok']);
+    } else if (c.growable) {
+      m.push(['🌱', currentLang === 'kz' ? 'Өсімдік қалыпты өсуде' : currentLang === 'en' ? 'Plant is growing normally' : 'Растение растет нормально', 'ok']);
+    } else {
+      const why = ['temp', 'soil', 'light']
+        .filter(k => c[k].level !== 'ok')
+        .map(k => NAMES[k] + ' ' + tStatus(c[k].labelKey).toLowerCase())
+        .join(', ');
+      m.push(['⏸', (currentLang === 'kz' ? 'Өсу тоқтатылды: ' : currentLang === 'en' ? 'Growth paused: ' : 'Рост приостановлен: ') + why, 'warn']);
+    }
+    return m;
+  }
+
+  function renderMessages(r, c) {
+    const list = liveMessages(r, c);
+    const sig = JSON.stringify(list) + currentLang;
+    if (sig === lastMsgSig) return;
+    lastMsgSig = sig;
+    els.liveMsgs.innerHTML = list
+      .map(x => `<li class="${x[2]}"><span aria-hidden="true">${x[0]}</span><span>${x[1]}</span></li>`)
+      .join('');
+  }
+
+  function renderLog() {
+    if (!logDirty) return;
+    logDirty = false;
+    els.eventLog.innerHTML = s.log.slice(0, 14)
+      .map(e => `<li class="${e.tone}"><time>${fmtClock(e.t)}</time><span>${e.icon} ${e.text}</span></li>`)
+      .join('');
+  }
+
+  function renderStaticTexts() {
+    $('t-brand-title').textContent = t('title');
+    $('t-brand-sub').textContent = t('subtitle');
+    $('t-sys-online').textContent = t('sysOnline');
+    $('t-scene-tip').textContent = t('sceneTip');
+    $('t-growth-lbl').textContent = t('growthLbl');
+    $('t-chart-title').textContent = t('chartTitle');
+    $('t-chart-sub').textContent = t('chartSub');
+    $('t-leg-temp').textContent = t('legTemp');
+    $('t-leg-hum').textContent = t('legHum');
+    $('t-controls-title').textContent = t('controlsTitle');
+    $('modeAuto').textContent = t('autoModeBtn');
+    $('modeManual').textContent = t('manualModeBtn');
+    $('t-act-pump').textContent = t('waterPlant');
+    $('t-act-fan').textContent = t('turnFanOn');
+    $('t-act-lamp').textContent = t('turnLightOn');
+    $('t-act-refill').textContent = t('refillTank');
+    $('t-speed-lbl').textContent = t('simSpeed');
+    $('resetBtn').textContent = t('resetSim');
+    $('t-health-title').textContent = t('plantHealthTitle');
+    $('t-hk-temp').textContent = t('hkTemp');
+    $('t-hk-hum').textContent = t('hkHum');
+    $('t-hk-soil').textContent = t('hkSoil');
+    $('t-hk-light').textContent = t('hkLight');
+    $('t-system-title').textContent = t('smartSystem');
+    $('t-events-title').textContent = t('recentEvents');
+    $('t-footer').textContent = t('footer');
+
+    // Sensors titles and target texts
+    $('t-s-temp').textContent = t('sensorTemp');
+    $('t-target-temp').textContent = t('targetTemp');
+    $('t-s-hum').textContent = t('sensorHum');
+    $('t-target-hum').textContent = t('targetHum');
+    $('t-s-soil').textContent = t('sensorSoil');
+    $('t-target-soil').textContent = t('targetSoil');
+    $('t-s-light').textContent = t('sensorLight');
+    $('t-target-light').textContent = t('targetLight');
+    $('t-s-water').textContent = t('sensorWater');
+    $('t-target-water').textContent = t('targetWater');
+  }
+
+  function renderControls() {
+    const manual = s.mode === 'manual';
+    els.modeAuto.setAttribute('aria-pressed', String(!manual));
+    els.modeManual.setAttribute('aria-pressed', String(manual));
+    els.modeSeg.dataset.value = s.mode;
+    els.modeHint.textContent = manual ? t('manualHint') : t('autoHint');
+
+    ['pump', 'fan', 'lamp'].forEach(k => {
+      const b = els.act[k];
+      b.setAttribute('aria-pressed', String(s[k]));
+      const autoText = manual ? '' : (currentLang === 'kz' ? 'Авто · ' : currentLang === 'en' ? 'Auto · ' : 'Авто · ');
+      const stateText = s[k] ? (currentLang === 'kz' ? 'ҚОСУЛЫ' : currentLang === 'en' ? 'ON' : 'ВКЛ') : (currentLang === 'kz' ? 'СӨНДУЛІ' : currentLang === 'en' ? 'OFF' : 'ВЫКЛ');
+      b.querySelector('em').textContent = autoText + stateText;
+    });
+
+    els.act.pump.querySelector('.lb').textContent = s.pump ? t('stopWatering') : t('waterPlant');
+    els.act.fan.querySelector('.lb').textContent = (s.fan ? t('turnFanOff') : t('turnFanOn'));
+    els.act.lamp.querySelector('.lb').textContent = (s.lamp ? t('turnLightOff') : t('turnLightOn'));
+
+    const water = Math.round(s.water);
+    els.act.refill.querySelector('em').textContent = water + '%';
+    els.act.refill.dataset.level = water <= 0 ? 'bad' : water < CFG.limits.waterLow ? 'warn' : 'ok';
+    els.refillFill.style.height = water + '%';
+
+    els.speedSeg.querySelectorAll('button').forEach(b => {
+      b.setAttribute('aria-pressed', String(Number(b.dataset.speed) === s.speed));
+    });
+  }
+
+  function drawChart(r) {
+    const cv = els.chartCanvas;
+    const box = els.chartBox;
+    const w = box.clientWidth;
+    const h = box.clientHeight;
+    if (!w || !h) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const pw = Math.round(w * dpr);
+    const ph = Math.round(h * dpr);
+    if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const P = { l: 40, r: 40, t: 12, b: 28 };
+    const plotW = w - P.l - P.r;
+    const plotH = h - P.t - P.b;
+    const TMIN = 8, TMAX = 40;
+    const yT = v => P.t + (1 - (v - TMIN) / (TMAX - TMIN)) * plotH;
+    const yH = v => P.t + (1 - v / 100) * plotH;
+
+    const t1 = Math.max(s.time, CFG.historyWindow);
+    const t0 = t1 - CFG.historyWindow;
+    const xT = t => P.l + (t - t0) / CFG.historyWindow * plotW;
+
+    ctx.font = '600 11.5px Figtree, system-ui, sans-serif';
+
+    ctx.fillStyle = 'rgba(44, 154, 90, .12)';
+    ctx.fillRect(P.l, yT(RANGES.temp.ok[1]), plotW, yT(RANGES.temp.ok[0]) - yT(RANGES.temp.ok[1]));
+    ctx.strokeStyle = 'rgba(44, 154, 90, .45)';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    [RANGES.temp.ok[0], RANGES.temp.ok[1]].forEach(v => {
+      const y = Math.round(yT(v)) + 0.5;
+      ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l + plotW, y); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    ctx.lineWidth = 1;
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i <= 4; i++) {
+      const y = Math.round(P.t + plotH * i / 4) + 0.5;
+      ctx.strokeStyle = '#dde6d3';
+      ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l + plotW, y); ctx.stroke();
+      ctx.textAlign = 'right';
+      ctx.fillStyle = COL.heat;
+      ctx.fillText(String(TMAX - i * 8), P.l - 8, y);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = COL.water;
+      ctx.fillText(String(100 - i * 25), P.l + plotW + 8, y);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let tk = Math.ceil(t0 / 60) * 60; tk <= t1; tk += 60) {
+      const x = Math.round(xT(tk)) + 0.5;
+      ctx.strokeStyle = '#e8eee1';
+      ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t + plotH); ctx.stroke();
+      ctx.fillStyle = '#6b7f72';
+      const minText = currentLang === 'kz' ? ' мин' : currentLang === 'en' ? ' min' : ' мин';
+      ctx.fillText(tk === 0 ? '0' : (tk / 60) + minText, x, P.t + plotH + 8);
+    }
+
+    const pts = s.history.filter(p => p.t >= t0 - CFG.historyEvery);
+    if (pts.length < 2) return;
+
+    const trace = (getY, color) => {
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        const x = xT(p.t), y = getY(p);
+        if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      });
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    };
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(P.l, P.t, plotW, plotH);
+    ctx.clip();
+
+    const grad = ctx.createLinearGradient(0, P.t, 0, P.t + plotH);
+    grad.addColorStop(0, 'rgba(224, 96, 47, .22)');
+    grad.addColorStop(1, 'rgba(224, 96, 47, 0)');
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const x = xT(p.t), y = yT(p.temp);
+      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    });
+    ctx.lineTo(xT(pts[pts.length - 1].t), P.t + plotH);
+    ctx.lineTo(xT(pts[0].t), P.t + plotH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    const gradH = ctx.createLinearGradient(0, P.t, 0, P.t + plotH);
+    gradH.addColorStop(0, 'rgba(58, 152, 221, .16)');
+    gradH.addColorStop(1, 'rgba(58, 152, 221, 0)');
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const x = xT(p.t), y = yH(p.hum);
+      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    });
+    ctx.lineTo(xT(pts[pts.length - 1].t), P.t + plotH);
+    ctx.lineTo(xT(pts[0].t), P.t + plotH);
+    ctx.closePath();
+    ctx.fillStyle = gradH;
+    ctx.fill();
+
+    trace(p => yH(p.hum), COL.water);
+    trace(p => yT(p.temp), COL.heat);
+    ctx.restore();
+
+    const last = pts[pts.length - 1];
+    [[yT(last.temp), COL.heat], [yH(last.hum), COL.water]].forEach(([y, color]) => {
+      ctx.beginPath();
+      ctx.arc(xT(last.t), y, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+    });
+
+    els.legTemp.textContent = r.temp.toFixed(1) + ' °C';
+    els.legHum.textContent = r.hum + ' %';
+  }
+
+  function render() {
+    const r = reading();
+    const c = classify(r);
+    renderSensors(r, c);
+    renderScene(r, c);
+    renderGrowth();
+    renderHealth(c);
+    renderMessages(r, c);
+    renderLog();
+    renderControls();
+    drawChart(r);
+    els.legTemp.textContent = r.temp.toFixed(1) + ' °C';
+    els.legHum.textContent = r.hum + ' %';
+  }
+
+  let toastTimer = 0;
+  function toast(text) {
+    els.toast.textContent = text;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => els.toast.classList.remove('show'), 2400);
+  }
+
+  function setLang(lang) {
+    if (currentLang === lang) return;
+    currentLang = lang;
+    els.langSeg.querySelectorAll('button').forEach(b => {
+      b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+    });
+    renderStaticTexts();
+    render();
+    toast(lang === 'kz' ? '🇰🇿 Тіл қазақ тіліне ауыстырылды' : lang === 'en' ? '🇬🇧 Language switched to English' : '🇷🇺 Язык изменен на русский');
+  }
+
+  function setMode(mode) {
+    if (s.mode === mode) return;
+    s.mode = mode;
+    log(mode === 'auto' ? '🤖' : '🖐',
+      mode === 'auto' ? (currentLang === 'kz' ? 'Автоматты режим қосылды' : 'Автоматический режим включен') : (currentLang === 'kz' ? 'Қолмен басқару қосылды' : 'Ручной режим включен'));
+    toast(mode === 'auto' ? (currentLang === 'kz' ? '🤖 Автоматты режим' : '🤖 Автоматический режим') : (currentLang === 'kz' ? '🖐 Қолмен басқару' : '🖐 Ручной режим'));
+    render();
+  }
+
+  function refill() {
+    if (Math.round(s.water) >= 100) {
+      toast(currentLang === 'kz' ? '🚰 Су резервуары толы' : currentLang === 'en' ? '🚰 Water tank is already full' : '🚰 Резервуар для воды уже полон');
+      return;
+    }
+    s.water = 100;
+    log('🚰', currentLang === 'kz' ? 'Су резервуары 100%-ға толтырылды' : currentLang === 'en' ? 'Water tank refilled to 100%' : 'Резервуар заполнен на 100%', 'ok');
+    toast(currentLang === 'kz' ? '🚰 Су резервуары толтырылды' : currentLang === 'en' ? '🚰 Water tank refilled' : '🚰 Резервуар заполнен');
+    render();
+  }
+
+  function manualAction(act) {
+    let switched = false;
+    if (s.mode !== 'manual') {
+      s.mode = 'manual';
+      switched = true;
+      log('🖐', currentLang === 'kz' ? 'Қолмен басқару режимге ауыстырылды' : 'Включен ручной режим');
+    }
+
+    let msg = '';
+    if (act === 'pump') {
+      if (s.pump) { setDevice('pump', false, currentLang === 'kz' ? 'Суару тоқтатылды' : 'Полив остановлен'); msg = currentLang === 'kz' ? '⏹ Суару тоқтатылды' : '⏹ Полив остановлен'; }
+      else if (s.water <= 0) { log('🚫', currentLang === 'kz' ? 'Су резервуары бос' : 'Резервуар пуст', 'warn'); msg = currentLang === 'kz' ? '🚫 Резервуар бос' : '🚫 Резервуар пуст'; }
+      else if (s.soil >= 95) { log('💦', currentLang === 'kz' ? 'Топырақ тым ылғалды' : 'Почва переувлажнена', 'warn'); msg = currentLang === 'kz' ? '💦 Топырақ тым ылғалды' : '💦 Почва уже влажная'; }
+      else { setDevice('pump', true, currentLang === 'kz' ? 'Суару басталды (қолмен)' : 'Полив запущен (ручной режим)'); msg = currentLang === 'kz' ? '💧 Суару басталды' : '💧 Полив запущен'; }
+    } else if (act === 'fan') {
+      const on = !s.fan;
+      setDevice('fan', on, on ? (currentLang === 'kz' ? 'Желдеткіш қосылды' : 'Вентилятор включен') : (currentLang === 'kz' ? 'Желдеткіш сөндірілді' : 'Вентилятор выключен'));
+      msg = on ? (currentLang === 'kz' ? '🌬 Желдеткіш қосулы' : '🌬 Вентилятор включен') : (currentLang === 'kz' ? '⏹ Желдеткіш сөндірулі' : '⏹ Вентилятор выключен');
+    } else if (act === 'lamp') {
+      const on = !s.lamp;
+      setDevice('lamp', on, on ? (currentLang === 'kz' ? 'Фитолампа қосылды' : 'Фитолампа включена') : (currentLang === 'kz' ? 'Фитолампа сөндірілді' : 'Фитолампа выключена'));
+      msg = on ? (currentLang === 'kz' ? '💡 Фитолампа қосулы' : '💡 Фитолампа включена') : (currentLang === 'kz' ? '⏹ Фитолампа сөндірулі' : '⏹ Фитолампа выключена');
+    }
+
+    toast(switched ? (currentLang === 'kz' ? '🖐 Қолмен режим · ' : '🖐 Ручной режим · ') + msg : msg);
+    render();
+  }
+
+  function handleAct(act) {
+    if (act === 'refill') refill();
+    else manualAction(act);
+  }
+
+  function resetSimulation() {
+    s = createState();
+    plantKey = '';
+    lastMsgSig = '';
+    logDirty = true;
+    toast(currentLang === 'kz' ? '🔄 Симуляция қайта басталды' : currentLang === 'en' ? '🔄 Simulation reset' : '🔄 Симуляция сброшена');
+    render();
+  }
+
+  function init() {
+    SENSOR_KEYS.forEach(k => {
+      const R = RANGES[k];
+      const span = R.max - R.min;
+      const z = $('z-' + k);
+      z.style.strokeDasharray = ((R.ok[1] - R.ok[0]) / span * SWEEP).toFixed(1) + ' ' + RING.toFixed(2);
+      z.style.strokeDashoffset = (-(R.ok[0] - R.min) / span * SWEEP).toFixed(1);
+    });
+
+    CFG.stages.forEach((st, i) => {
+      const node = document.createElement('b');
+      node.className = 'node';
+      node.style.left = st.from + '%';
+      els.growthBar.appendChild(node);
+      const label = document.createElement('span');
+      label.textContent = i18n['ru'].stageNames[i];
+      label.style.left = st.from + '%';
+      els.stageLabels.appendChild(label);
+    });
+
+    els.modeAuto.addEventListener('click', () => setMode('auto'));
+    els.modeManual.addEventListener('click', () => setMode('manual'));
+
+    els.langSeg.addEventListener('click', e => {
+      const btn = e.target.closest('[data-lang]');
+      if (btn) setLang(btn.dataset.lang);
+    });
+
+    const onPress = e => {
+      const el = e.target.closest('[data-act]');
+      if (el) handleAct(el.dataset.act);
+    };
+    els.actions.addEventListener('click', onPress);
+    els.scene.addEventListener('click', onPress);
+    els.scene.addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-act]')) {
+        e.preventDefault();
+        onPress(e);
+      }
+    });
+
+    els.speedSeg.addEventListener('click', e => {
+      const btn = e.target.closest('[data-speed]');
+      if (!btn) return;
+      s.speed = Number(btn.dataset.speed);
+      renderControls();
+    });
+
+    els.resetBtn.addEventListener('click', resetSimulation);
+
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(() => drawChart(reading())).observe(els.chartBox);
+    } else {
+      window.addEventListener('resize', () => drawChart(reading()));
+    }
+
+    renderStaticTexts();
+    render();
+    setInterval(tick, CFG.tickMs);
+  }
+
+  init();
+})();
+  </script>
+</body>
+</html>
